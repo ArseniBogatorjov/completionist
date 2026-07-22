@@ -18,8 +18,32 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     prisma;
     constructor(configService, prisma) {
-        super({});
+        super({
+            jwtFromRequest: passport_jwt_1.ExtractJwt.fromExtractors([
+                (request) => {
+                    return request?.cookies?.accessToken ?? null;
+                },
+            ]),
+            ignoreExpiration: false,
+            secretOrKey: configService.getOrThrow('JWT_SECRET'),
+        });
         this.prisma = prisma;
+    }
+    async validate(payload) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: payload.sub },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                avatarUrl: true,
+                createdAt: true,
+            },
+        });
+        if (!user) {
+            throw new common_1.UnauthorizedException('Пользователь не найден');
+        }
+        return user;
     }
 };
 exports.JwtStrategy = JwtStrategy;

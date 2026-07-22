@@ -1,7 +1,7 @@
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
@@ -18,4 +18,5 @@ export declare class AuthController {
         email: string | null;
         avatarUrl: string | null;
     }>;
+    getProfile(req: Request): Express.User | undefined;
 }
