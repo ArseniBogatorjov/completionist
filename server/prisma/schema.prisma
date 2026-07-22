@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  steamId      String?  @unique
+  username     String
+  avatarUrl    String?
+  email        String?  @unique
+  passwordHash String?
+  telegramId   BigInt?  @unique
+  createdAt    DateTime @default(now())
+
+  games        UserGame[]
+  achievements UserAchievement[]
+}
+
+model Game {
+  id                String  @id @default(uuid())
+  steamAppId        Int     @unique
+  name              String
+  coverUrl          String?
+  isMultiplayerDead Boolean @default(false)
+
+  achievements Achievement[]
+  users        UserGame[]
+
+  @@index([steamAppId])
+}
+
+model Achievement {
+  id           String  @id @default(uuid())
+  gameId       String
+  game         Game    @relation(fields: [gameId], references: [id])
+  apiname      String
+  name         String
+  description  String?
+  iconUrl      String
+  globalRarity Float?
+  isMissable   Boolean @default(false)
+  dlcName      String?
+
+  userAchievements UserAchievement[]
+
+  @@unique([gameId, apiname])
+  @@index([gameId])
+}
+
+model UserGame {
+  id                String   @id @default(uuid())
+  userId            String
+  gameId            String
+  user              User     @relation(fields: [userId], references: [id])
+  game              Game     @relation(fields: [gameId], references: [id])
+  playtimeMinutes   Int      @default(0)
+  completionPercent Float    @default(0.0)
+  status            String   @default("backlog")
+  lastPlayedAt      DateTime @default(now())
+
+  @@unique([userId, gameId])
+  @@index([userId, status])
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  achievementId String
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
