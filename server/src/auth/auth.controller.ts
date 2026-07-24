@@ -1,21 +1,25 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { PrismaService } from '../prisma/prisma.service';
+import type { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  getProfile(@CurrentUser() user: User) {
+    return user;
+  }
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
@@ -40,8 +44,9 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('me')
-  getProfile(@Req() req: Request) {
-    return req.user;
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('accessToken');
+    return { status: 'Success' };
   }
 }

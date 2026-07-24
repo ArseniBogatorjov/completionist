@@ -18,10 +18,17 @@ const auth_service_1 = require("./auth.service");
 const register_dto_1 = require("./dto/register.dto");
 const login_dto_1 = require("./dto/login.dto");
 const passport_1 = require("@nestjs/passport");
+const current_user_decorator_1 = require("./decorators/current-user.decorator");
+const prisma_service_1 = require("../prisma/prisma.service");
 let AuthController = class AuthController {
     authService;
-    constructor(authService) {
+    prisma;
+    constructor(authService, prisma) {
         this.authService = authService;
+        this.prisma = prisma;
+    }
+    getProfile(user) {
+        return user;
     }
     register(dto) {
         return this.authService.register(dto);
@@ -36,11 +43,20 @@ let AuthController = class AuthController {
         });
         return user;
     }
-    getProfile(req) {
-        return req.user;
+    logout(res) {
+        res.clearCookie('accessToken');
+        return { status: 'Success' };
     }
 };
 exports.AuthController = AuthController;
+__decorate([
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
+    (0, common_1.Get)('me'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.Post)('register'),
     __param(0, (0, common_1.Body)()),
@@ -58,14 +74,15 @@ __decorate([
 ], AuthController.prototype, "login", null);
 __decorate([
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('jwt')),
-    (0, common_1.Get)('me'),
-    __param(0, (0, common_1.Req)()),
+    (0, common_1.Post)('logout'),
+    __param(0, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], AuthController.prototype, "getProfile", null);
+], AuthController.prototype, "logout", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService,
+        prisma_service_1.PrismaService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map
