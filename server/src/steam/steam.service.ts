@@ -2,18 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SyncSteamDto } from './dto/sync-steam.dto';
-
-export interface SteamGetOwnedGamesResponse {
-  response: {
-    game_count?: number;
-    games?: Array<{
-      appid: number;
-      name: string;
-      playtime_forever: number;
-      img_icon_url: string;
-    }>;
-  };
-}
+import type {
+  SteamGameSchemaResponse,
+  SteamGetOwnedGamesResponse,
+} from './types/steam.interface';
 
 @Injectable()
 export class SteamService {
@@ -89,5 +81,19 @@ export class SteamService {
     return { synced: games.length };
   }
 
-  async fetchGameSchema(appId: number) {}
+  async fetchGameSchema(appId: number) {
+    const url = new URL(
+      'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/',
+    );
+    url.searchParams.append('key', this.STEAM_API_KEY);
+    url.searchParams.append('appid', appId.toString());
+
+    const response = await fetch(url);
+
+    if (!response.ok) throw new BadRequestException('Error fetching Steam API');
+
+    const data = (await response.json()) as SteamGameSchemaResponse;
+
+    return data;
+  }
 }
