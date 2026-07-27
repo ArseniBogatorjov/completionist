@@ -5,15 +5,11 @@ import { LoginDto } from './dto/login.dto';
 import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { PrismaService } from '../prisma/prisma.service';
 import type { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
