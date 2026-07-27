@@ -1,7 +1,7 @@
-import {BadRequestException, Injectable} from '@nestjs/common';
-import {ConfigService} from '@nestjs/config';
-import {PrismaService} from '../prisma/prisma.service';
-import {SyncSteamDto} from './dto/sync-steam.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
+import { SyncSteamDto } from './dto/sync-steam.dto';
 
 export interface SteamGetOwnedGamesResponse {
   response: {
@@ -17,20 +17,21 @@ export interface SteamGetOwnedGamesResponse {
 
 @Injectable()
 export class SteamService {
+  private readonly STEAM_API_KEY: string;
+
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) {
+    this.STEAM_API_KEY = configService.getOrThrow('STEAM_API_KEY');
+  }
 
   async fetchUserGames(steamId: string) {
     const url = new URL(
       'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/',
     );
 
-    const STEAM_API_KEY: string =
-      this.configService.getOrThrow('STEAM_API_KEY');
-
-    url.searchParams.append('key', STEAM_API_KEY);
+    url.searchParams.append('key', this.STEAM_API_KEY);
     url.searchParams.append('steamid', steamId);
     url.searchParams.append('include_appinfo', 'true');
 
@@ -87,4 +88,6 @@ export class SteamService {
 
     return { synced: games.length };
   }
+
+  async fetchGameSchema(appId: number) {}
 }
