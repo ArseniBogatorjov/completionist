@@ -27,3 +27,17 @@ export interface SteamGetOwnedGamesResponse {
     }>;
   };
 }
+
+export interface SteamPlayerAchievementsResponse {
+  playerstats?: {
+    steamID?: string;
+    gameName?: string;
+    achievements?: Array<{
+      apiname: string;
+      achieved: number; // 1 = выбита, 0 = не выбита
+      unlocktime: number; // Unix timestamp
+    }>;
+    success?: boolean;
+    error?: string;
+  };
+}

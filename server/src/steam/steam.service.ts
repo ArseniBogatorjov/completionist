@@ -1,8 +1,12 @@
-import {BadRequestException, Injectable, Logger} from '@nestjs/common';
-import {ConfigService} from '@nestjs/config';
-import {PrismaService} from '../prisma/prisma.service';
-import {SyncSteamDto} from './dto/sync-steam.dto';
-import type {SteamGameSchemaResponse, SteamGetOwnedGamesResponse,} from './types/steam.interface';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
+import { SyncSteamDto } from './dto/sync-steam.dto';
+import {
+  SteamGameSchemaResponse,
+  SteamGetOwnedGamesResponse,
+  SteamPlayerAchievementsResponse,
+} from './types/steam.interface';
 
 @Injectable()
 export class SteamService {
@@ -28,20 +32,16 @@ export class SteamService {
 
       const response = await fetch(url);
 
-      if (!response.ok) {
-        throw new BadRequestException(
-          'Failed to fetch user games from Steam API',
-        );
-      }
+      if (!response.ok) return null;
 
       const data = (await response.json()) as SteamGetOwnedGamesResponse;
+
       return data;
     } catch (error) {
       this.logger.error(
-        `Error fetching user games for SteamID ${steamId}:`,
-        error,
+        `Error fetching user games for SteamID ${steamId}: ${error}`,
       );
-      throw new BadRequestException('Unable to retrieve games from Steam');
+      return null;
     }
   }
 
@@ -50,22 +50,45 @@ export class SteamService {
       const url = new URL(
         'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/',
       );
+
       url.searchParams.append('key', this.STEAM_API_KEY);
       url.searchParams.append('appid', appId.toString());
 
       const response = await fetch(url);
 
-      if (!response.ok) {
-        throw new BadRequestException(
-          `Failed to fetch schema for appId ${appId}`,
-        );
-      }
+      if (!response.ok) return null;
 
       const data = (await response.json()) as SteamGameSchemaResponse;
+
       return data;
     } catch (error) {
       this.logger.warn(
         `Failed to fetch game schema for appId ${appId}: ${error}`,
+      );
+      return null;
+    }
+  }
+
+  async fetchUserAchievements(steamId: string, appId: number) {
+    try {
+      const url = new URL(
+        'http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/',
+      );
+
+      url.searchParams.append('key', this.STEAM_API_KEY);
+      url.searchParams.append('steamid', steamId);
+      url.searchParams.append('appid', appId.toString());
+
+      const response = await fetch(url);
+
+      if (!response.ok) return null;
+
+      const data = (await response.json()) as SteamPlayerAchievementsResponse;
+
+      return data;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to fetch player achievements for appId ${appId}: ${error}`,
       );
       return null;
     }
@@ -93,8 +116,7 @@ export class SteamService {
       });
     } catch (error) {
       this.logger.error(
-        `Failed to save achievements for gameId ${gameId} (appId: ${appId}):`,
-        error,
+        `Failed to save achievements for gameId ${gameId} (appId: ${appId}): ${error}`,
       );
     }
   }
@@ -105,8 +127,11 @@ export class SteamService {
     try {
       const steamData = await this.fetchUserGames(steamId);
 
-      const games = steamData.response?.games;
-      if (!games) return { synced: 0 };
+      const games = steamData?.response?.games;
+
+      if (!games) {
+        throw new BadRequestException('Unable to retrieve games from Steam');
+      }
 
       await Promise.all(
         games.map(async (game) => {
@@ -143,7 +168,6 @@ export class SteamService {
           await this.saveGameAchievements(dbGame.id, game.appid);
         }),
       );
-
       return { synced: games.length };
     } catch (error) {
       this.logger.error(`User sync failed for userId ${userId}:`, error);
