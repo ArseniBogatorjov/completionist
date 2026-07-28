@@ -21,7 +21,9 @@ export class SteamService {
     this.STEAM_API_KEY = configService.getOrThrow('STEAM_API_KEY');
   }
 
-  private async fetchUserGames(steamId: string) {
+  private async fetchUserGames(
+    steamId: string,
+  ): Promise<SteamGetOwnedGamesResponse | null> {
     try {
       const url = new URL(
         'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/',
@@ -46,7 +48,9 @@ export class SteamService {
     }
   }
 
-  private async fetchGameSchema(appId: number) {
+  private async fetchGameSchema(
+    appId: number,
+  ): Promise<SteamGameSchemaResponse | null> {
     try {
       const url = new URL(
         'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/',
@@ -70,7 +74,10 @@ export class SteamService {
     }
   }
 
-  private async fetchUserAchievements(steamId: string, appId: number) {
+  private async fetchUserAchievements(
+    steamId: string,
+    appId: number,
+  ): Promise<SteamPlayerAchievementsResponse | null> {
     try {
       const url = new URL(
         'http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/',
@@ -95,7 +102,10 @@ export class SteamService {
     }
   }
 
-  private async saveGameAchievements(gameId: string, appId: number) {
+  private async saveGameAchievements(
+    gameId: string,
+    appId: number,
+  ): Promise<void> {
     try {
       const schema = await this.fetchGameSchema(appId);
 
@@ -122,7 +132,41 @@ export class SteamService {
     }
   }
 
-  private async syncSingleGame(game: SteamGame, userId: string) {
+  private async saveUserAchievements(
+    userId: string,
+    steamId: string,
+    gameId: string,
+    appId: number,
+  ): Promise<void> {
+    try {
+      const data = await this.fetchUserAchievements(steamId, appId);
+
+      if (!data) return;
+
+      const filteredData = data.playerstats?.achievements?.filter(
+        (achievement) => achievement.achieved === 1,
+      );
+
+      if (!filteredData || filteredData.length === 0) return;
+
+      const achievementApiNames: string[] = filteredData.map(
+        (achievement) => achievement.apiname,
+      );
+
+      // TODO: continue to write code
+      // TODO: group fetches saves and sync
+    } catch (error) {
+      this.logger.error(
+        `Failed to save achievements for user ${userId}: ${error}`,
+      );
+    }
+  }
+
+  private async syncSingleGame(
+    game: SteamGame,
+    userId: string,
+    steamId: string,
+  ): Promise<void> {
     try {
       const dbGame = await this.prisma.game.upsert({
         where: { steamAppId: game.appid },
@@ -155,6 +199,8 @@ export class SteamService {
       });
 
       await this.saveGameAchievements(dbGame.id, game.appid);
+
+      // this.saveUserAchievements(userId, steamId, dbGame.id, game.appid);
     } catch (error) {
       this.logger.error(
         `Failed to sync single game appId ${game.appid} for user ${userId}: ${error}`,
@@ -162,7 +208,10 @@ export class SteamService {
     }
   }
 
-  async syncUserGames(userId: string, dto: SyncSteamDto) {
+  async syncUserGames(
+    userId: string,
+    dto: SyncSteamDto,
+  ): Promise<{ synced: number }> {
     const { steamId } = dto;
 
     try {
@@ -174,7 +223,9 @@ export class SteamService {
         throw new BadRequestException('Unable to retrieve games from Steam');
       }
 
-      await Promise.all(games.map((game) => this.syncSingleGame(game, userId)));
+      await Promise.all(
+        games.map((game) => this.syncSingleGame(game, userId, steamId)),
+      );
 
       return { synced: games.length };
     } catch (error) {
