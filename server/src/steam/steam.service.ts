@@ -174,11 +174,8 @@ export class SteamService {
         throw new BadRequestException('Unable to retrieve games from Steam');
       }
 
-      await Promise.all(
-        games.map(async (game) => {
-          await this.syncSingleGame(game, userId);
-        }),
-      );
+      await Promise.all(games.map((game) => this.syncSingleGame(game, userId)));
+
       return { synced: games.length };
     } catch (error) {
       this.logger.error(`User sync failed for userId ${userId}:`, error);
