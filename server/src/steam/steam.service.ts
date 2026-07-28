@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SyncSteamDto } from './dto/sync-steam.dto';
 import {
+  SteamGame,
   SteamGameSchemaResponse,
   SteamGetOwnedGamesResponse,
   SteamPlayerAchievementsResponse,
@@ -20,7 +21,7 @@ export class SteamService {
     this.STEAM_API_KEY = configService.getOrThrow('STEAM_API_KEY');
   }
 
-  async fetchUserGames(steamId: string) {
+  private async fetchUserGames(steamId: string) {
     try {
       const url = new URL(
         'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/',
@@ -45,7 +46,7 @@ export class SteamService {
     }
   }
 
-  async fetchGameSchema(appId: number) {
+  private async fetchGameSchema(appId: number) {
     try {
       const url = new URL(
         'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/',
@@ -69,7 +70,7 @@ export class SteamService {
     }
   }
 
-  async fetchUserAchievements(steamId: string, appId: number) {
+  private async fetchUserAchievements(steamId: string, appId: number) {
     try {
       const url = new URL(
         'http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/',
@@ -94,7 +95,7 @@ export class SteamService {
     }
   }
 
-  async saveGameAchievements(gameId: string, appId: number) {
+  private async saveGameAchievements(gameId: string, appId: number) {
     try {
       const schema = await this.fetchGameSchema(appId);
 
@@ -105,18 +106,58 @@ export class SteamService {
       if (!achievements || achievements.length === 0) return;
 
       await this.prisma.achievement.createMany({
-        data: achievements.map((ach) => ({
+        data: achievements.map((achievement) => ({
           gameId,
-          apiname: ach.name,
-          name: ach.displayName,
-          description: ach.description || null,
-          iconUrl: ach.icon,
+          apiname: achievement.name,
+          name: achievement.displayName,
+          description: achievement.description || null,
+          iconUrl: achievement.icon,
         })),
         skipDuplicates: true,
       });
     } catch (error) {
       this.logger.error(
         `Failed to save achievements for gameId ${gameId} (appId: ${appId}): ${error}`,
+      );
+    }
+  }
+
+  private async syncSingleGame(game: SteamGame, userId: string) {
+    try {
+      const dbGame = await this.prisma.game.upsert({
+        where: { steamAppId: game.appid },
+        update: {
+          name: game.name,
+        },
+        create: {
+          steamAppId: game.appid,
+          name: game.name,
+          coverUrl: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`,
+        },
+      });
+
+      await this.prisma.userGame.upsert({
+        where: {
+          userId_gameId: {
+            userId,
+            gameId: dbGame.id,
+          },
+        },
+        update: {
+          playtimeMinutes: game.playtime_forever,
+          lastPlayedAt: new Date(),
+        },
+        create: {
+          userId,
+          gameId: dbGame.id,
+          playtimeMinutes: game.playtime_forever,
+        },
+      });
+
+      await this.saveGameAchievements(dbGame.id, game.appid);
+    } catch (error) {
+      this.logger.error(
+        `Failed to sync single game appId ${game.appid} for user ${userId}: ${error}`,
       );
     }
   }
@@ -135,37 +176,7 @@ export class SteamService {
 
       await Promise.all(
         games.map(async (game) => {
-          const dbGame = await this.prisma.game.upsert({
-            where: { steamAppId: game.appid },
-            update: {
-              name: game.name,
-            },
-            create: {
-              steamAppId: game.appid,
-              name: game.name,
-              coverUrl: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`,
-            },
-          });
-
-          await this.prisma.userGame.upsert({
-            where: {
-              userId_gameId: {
-                userId,
-                gameId: dbGame.id,
-              },
-            },
-            update: {
-              playtimeMinutes: game.playtime_forever,
-              lastPlayedAt: new Date(),
-            },
-            create: {
-              userId,
-              gameId: dbGame.id,
-              playtimeMinutes: game.playtime_forever,
-            },
-          });
-
-          await this.saveGameAchievements(dbGame.id, game.appid);
+          await this.syncSingleGame(game, userId);
         }),
       );
       return { synced: games.length };

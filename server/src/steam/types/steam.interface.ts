@@ -1,3 +1,17 @@
+export interface SteamGame {
+  appid: number;
+  name: string;
+  playtime_forever: number;
+  img_icon_url: string;
+}
+
+export interface SteamGetOwnedGamesResponse {
+  response: {
+    game_count?: number;
+    games?: SteamGame[];
+  };
+}
+
 export interface SteamGameSchemaResponse {
   game: {
     gameName?: string;
@@ -16,26 +30,14 @@ export interface SteamGameSchemaResponse {
   };
 }
 
-export interface SteamGetOwnedGamesResponse {
-  response: {
-    game_count?: number;
-    games?: Array<{
-      appid: number;
-      name: string;
-      playtime_forever: number;
-      img_icon_url: string;
-    }>;
-  };
-}
-
 export interface SteamPlayerAchievementsResponse {
   playerstats?: {
     steamID?: string;
     gameName?: string;
     achievements?: Array<{
       apiname: string;
-      achieved: number; // 1 = выбита, 0 = не выбита
-      unlocktime: number; // Unix timestamp
+      achieved: number;
+      unlocktime: number;
     }>;
     success?: boolean;
     error?: string;
