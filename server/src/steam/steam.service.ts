@@ -37,9 +37,10 @@ export class SteamService {
 
       if (!response.ok) return null;
 
-      const data = (await response.json()) as SteamGetOwnedGamesResponse;
+      const userGamesData =
+        (await response.json()) as SteamGetOwnedGamesResponse;
 
-      return data;
+      return userGamesData;
     } catch (error) {
       this.logger.error(
         `Error fetching user games for SteamID ${steamId}: ${error}`,
@@ -63,9 +64,9 @@ export class SteamService {
 
       if (!response.ok) return null;
 
-      const data = (await response.json()) as SteamGameSchemaResponse;
+      const gameSchemaData = (await response.json()) as SteamGameSchemaResponse;
 
-      return data;
+      return gameSchemaData;
     } catch (error) {
       this.logger.warn(
         `Failed to fetch game schema for appId ${appId}: ${error}`,
@@ -91,9 +92,10 @@ export class SteamService {
 
       if (!response.ok) return null;
 
-      const data = (await response.json()) as SteamPlayerAchievementsResponse;
+      const playerAchievementsData =
+        (await response.json()) as SteamPlayerAchievementsResponse;
 
-      return data;
+      return playerAchievementsData;
     } catch (error) {
       this.logger.warn(
         `Failed to fetch player achievements for appId ${appId}: ${error}`,
@@ -107,11 +109,11 @@ export class SteamService {
     appId: number,
   ): Promise<void> {
     try {
-      const schema = await this.fetchGameSchema(appId);
+      const gameSchema = await this.fetchGameSchema(appId);
 
-      if (!schema) return;
+      if (!gameSchema) return;
 
-      const achievements = schema.game?.availableGameStats?.achievements;
+      const achievements = gameSchema.game?.availableGameStats?.achievements;
 
       if (!achievements || achievements.length === 0) return;
 
@@ -139,22 +141,60 @@ export class SteamService {
     appId: number,
   ): Promise<void> {
     try {
-      const data = await this.fetchUserAchievements(steamId, appId);
-
-      if (!data) return;
-
-      const filteredData = data.playerstats?.achievements?.filter(
-        (achievement) => achievement.achieved === 1,
+      const playerAchievementsData = await this.fetchUserAchievements(
+        steamId,
+        appId,
       );
 
-      if (!filteredData || filteredData.length === 0) return;
+      if (!playerAchievementsData) return;
 
-      const achievementApiNames: string[] = filteredData.map(
+      const unlockedAchievements =
+        playerAchievementsData.playerstats?.achievements?.filter(
+          (achievement) => achievement.achieved === 1,
+        );
+
+      if (!unlockedAchievements || unlockedAchievements.length === 0) return;
+
+      const achievementApiNames: string[] = unlockedAchievements.map(
         (achievement) => achievement.apiname,
       );
 
-      // TODO: continue to write code
-      // TODO: group fetches saves and sync
+      const dbAchievements = await this.prisma.achievement.findMany({
+        where: {
+          gameId,
+          apiname: { in: achievementApiNames },
+        },
+        select: {
+          id: true,
+          apiname: true,
+        },
+      });
+
+      const achievementMap = new Map(
+        dbAchievements.map((achievement) => [
+          achievement.apiname,
+          achievement.id,
+        ]),
+      );
+
+      const validUnlockedAchievements = unlockedAchievements.filter(
+        (achievement) => achievementMap.has(achievement.apiname),
+      );
+
+      const userAchievementsToCreate = validUnlockedAchievements.map(
+        (achievement) => ({
+          userId,
+          achievementId: achievementMap.get(achievement.apiname)!,
+          unlockedAt: new Date(achievement.unlocktime * 1000),
+        }),
+      );
+
+      if (userAchievementsToCreate.length > 0) {
+        await this.prisma.userAchievement.createMany({
+          data: userAchievementsToCreate,
+          skipDuplicates: true,
+        });
+      }
     } catch (error) {
       this.logger.error(
         `Failed to save achievements for user ${userId}: ${error}`,
@@ -168,7 +208,7 @@ export class SteamService {
     steamId: string,
   ): Promise<void> {
     try {
-      const dbGame = await this.prisma.game.upsert({
+      const savedGame = await this.prisma.game.upsert({
         where: { steamAppId: game.appid },
         update: {
           name: game.name,
@@ -184,7 +224,7 @@ export class SteamService {
         where: {
           userId_gameId: {
             userId,
-            gameId: dbGame.id,
+            gameId: savedGame.id,
           },
         },
         update: {
@@ -193,14 +233,19 @@ export class SteamService {
         },
         create: {
           userId,
-          gameId: dbGame.id,
+          gameId: savedGame.id,
           playtimeMinutes: game.playtime_forever,
         },
       });
 
-      await this.saveGameAchievements(dbGame.id, game.appid);
+      await this.saveGameAchievements(savedGame.id, game.appid);
 
-      // this.saveUserAchievements(userId, steamId, dbGame.id, game.appid);
+      await this.saveUserAchievements(
+        userId,
+        steamId,
+        savedGame.id,
+        game.appid,
+      );
     } catch (error) {
       this.logger.error(
         `Failed to sync single game appId ${game.appid} for user ${userId}: ${error}`,
@@ -215,9 +260,9 @@ export class SteamService {
     const { steamId } = dto;
 
     try {
-      const steamData = await this.fetchUserGames(steamId);
+      const userGamesData = await this.fetchUserGames(steamId);
 
-      const games = steamData?.response?.games;
+      const games = userGamesData?.response?.games;
 
       if (!games) {
         throw new BadRequestException('Unable to retrieve games from Steam');
