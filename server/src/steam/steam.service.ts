@@ -2,7 +2,9 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SyncSteamDto } from './dto/sync-steam.dto';
-import {
+import type {
+  CompletionStatus,
+  ProgressCalculationResponse,
   SteamGame,
   SteamGameSchemaResponse,
   SteamGetOwnedGamesResponse,
@@ -19,6 +21,31 @@ export class SteamService {
     private readonly prisma: PrismaService,
   ) {
     this.STEAM_API_KEY = configService.getOrThrow('STEAM_API_KEY');
+  }
+
+  private async calculateGameProgress(
+    userId: string,
+    gameId: string,
+  ): Promise<ProgressCalculationResponse> {
+    const [totalCount, unlockedCount] = await Promise.all([
+      this.prisma.achievement.count({ where: { gameId } }),
+      this.prisma.userAchievement.count({
+        where: { userId, achievement: { gameId } },
+      }),
+    ]);
+
+    if (totalCount === 0) {
+      return { completionPercent: 0, status: 'backlog' };
+    }
+
+    const rawPercent: number = (unlockedCount / totalCount) * 100;
+    const completionPercent: number = Math.round(rawPercent * 10) / 10;
+
+    let status: CompletionStatus = 'backlog';
+    if (completionPercent === 100) status = 'completed';
+    else if (completionPercent > 0) status = 'playing';
+
+    return { completionPercent, status };
   }
 
   private async fetchUserGames(
@@ -220,6 +247,20 @@ export class SteamService {
         },
       });
 
+      await this.saveGameAchievements(savedGame.id, game.appid);
+      await this.saveUserAchievements(
+        userId,
+        steamId,
+        savedGame.id,
+        game.appid,
+      );
+
+      const progress = await this.calculateGameProgress(userId, savedGame.id);
+
+      const lastPlayed = game.rtime_last_played
+        ? new Date(game.rtime_last_played * 1000)
+        : null;
+
       await this.prisma.userGame.upsert({
         where: {
           userId_gameId: {
@@ -229,23 +270,19 @@ export class SteamService {
         },
         update: {
           playtimeMinutes: game.playtime_forever,
-          lastPlayedAt: new Date(),
+          lastPlayedAt: lastPlayed,
+          completionPercent: progress.completionPercent,
+          status: progress.status,
         },
         create: {
           userId,
           gameId: savedGame.id,
           playtimeMinutes: game.playtime_forever,
+          lastPlayedAt: lastPlayed,
+          completionPercent: progress.completionPercent,
+          status: progress.status,
         },
       });
-
-      await this.saveGameAchievements(savedGame.id, game.appid);
-
-      await this.saveUserAchievements(
-        userId,
-        steamId,
-        savedGame.id,
-        game.appid,
-      );
     } catch (error) {
       this.logger.error(
         `Failed to sync single game appId ${game.appid} for user ${userId}: ${error}`,

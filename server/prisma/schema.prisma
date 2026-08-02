@@ -52,15 +52,15 @@ model Achievement {
 }
 
 model UserGame {
-  id                String   @id @default(uuid())
+  id                String    @id @default(uuid())
   userId            String
   gameId            String
-  user              User     @relation(fields: [userId], references: [id])
-  game              Game     @relation(fields: [gameId], references: [id])
-  playtimeMinutes   Int      @default(0)
-  completionPercent Float    @default(0.0)
-  status            String   @default("backlog")
-  lastPlayedAt      DateTime @default(now())
+  user              User      @relation(fields: [userId], references: [id])
+  game              Game      @relation(fields: [gameId], references: [id])
+  playtimeMinutes   Int       @default(0)
+  completionPercent Float     @default(0.0)
+  status            String    @default("backlog")
+  lastPlayedAt      DateTime?
 
   @@unique([userId, gameId])
   @@index([userId, status])

@@ -3,6 +3,7 @@ export interface SteamGame {
   name: string;
   playtime_forever: number;
   img_icon_url: string;
+  rtime_last_played?: number;
 }
 
 export interface SteamGetOwnedGamesResponse {
@@ -42,4 +43,11 @@ export interface SteamPlayerAchievementsResponse {
     success?: boolean;
     error?: string;
   };
+}
+
+export type CompletionStatus = 'backlog' | 'completed' | 'playing';
+
+export interface ProgressCalculationResponse {
+  completionPercent: number;
+  status: CompletionStatus;
 }
