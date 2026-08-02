@@ -38,8 +38,8 @@ export class SteamService {
       return { completionPercent: 0, status: 'backlog' };
     }
 
-    const rawPercent: number = (unlockedCount / totalCount) * 100;
-    const completionPercent: number = Math.round(rawPercent * 10) / 10;
+    const rawPercent = (unlockedCount / totalCount) * 100;
+    const completionPercent = Math.round(rawPercent * 10) / 10;
 
     let status: CompletionStatus = 'backlog';
     if (completionPercent === 100) status = 'completed';
@@ -64,10 +64,7 @@ export class SteamService {
 
       if (!response.ok) return null;
 
-      const userGamesData =
-        (await response.json()) as SteamGetOwnedGamesResponse;
-
-      return userGamesData;
+      return (await response.json()) as SteamGetOwnedGamesResponse;
     } catch (error) {
       this.logger.error(
         `Error fetching user games for SteamID ${steamId}: ${error}`,
@@ -91,9 +88,7 @@ export class SteamService {
 
       if (!response.ok) return null;
 
-      const gameSchemaData = (await response.json()) as SteamGameSchemaResponse;
-
-      return gameSchemaData;
+      return (await response.json()) as SteamGameSchemaResponse;
     } catch (error) {
       this.logger.warn(
         `Failed to fetch game schema for appId ${appId}: ${error}`,
@@ -119,10 +114,7 @@ export class SteamService {
 
       if (!response.ok) return null;
 
-      const playerAchievementsData =
-        (await response.json()) as SteamPlayerAchievementsResponse;
-
-      return playerAchievementsData;
+      return (await response.json()) as SteamPlayerAchievementsResponse;
     } catch (error) {
       this.logger.warn(
         `Failed to fetch player achievements for appId ${appId}: ${error}`,
@@ -182,7 +174,7 @@ export class SteamService {
 
       if (!unlockedAchievements || unlockedAchievements.length === 0) return;
 
-      const achievementApiNames: string[] = unlockedAchievements.map(
+      const achievementApiNames = unlockedAchievements.map(
         (achievement) => achievement.apiname,
       );
 
