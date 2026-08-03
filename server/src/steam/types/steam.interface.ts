@@ -51,3 +51,7 @@ export interface ProgressCalculationResponse {
   completionPercent: number;
   status: CompletionStatus;
 }
+
+export interface SyncedGamesResponse {
+  synced: number;
+}

@@ -2,13 +2,14 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SyncSteamDto } from './dto/sync-steam.dto';
-import type {
+import {
   CompletionStatus,
   ProgressCalculationResponse,
   SteamGame,
   SteamGameSchemaResponse,
   SteamGetOwnedGamesResponse,
   SteamPlayerAchievementsResponse,
+  SyncedGamesResponse,
 } from './types/steam.interface';
 
 @Injectable()
@@ -282,10 +283,10 @@ export class SteamService {
     }
   }
 
-  async syncUserGames(
+  public async syncUserGames(
     userId: string,
     dto: SyncSteamDto,
-  ): Promise<{ synced: number }> {
+  ): Promise<SyncedGamesResponse> {
     const { steamId } = dto;
 
     try {
