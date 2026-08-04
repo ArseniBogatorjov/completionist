@@ -2,15 +2,17 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SyncSteamDto } from './dto/sync-steam.dto';
-import {
+import type {
   CompletionStatus,
-  ProgressCalculationResponse,
+  ProgressCalculationResult,
+  SyncedGamesResponse,
+} from './types/steam.types';
+import type {
   SteamGame,
   SteamGameSchemaResponse,
   SteamGetOwnedGamesResponse,
   SteamPlayerAchievementsResponse,
-  SyncedGamesResponse,
-} from './types/steam.interface';
+} from './types/steam-api.responses';
 
 @Injectable()
 export class SteamService {
@@ -27,19 +29,19 @@ export class SteamService {
   private async calculateGameProgress(
     userId: string,
     gameId: string,
-  ): Promise<ProgressCalculationResponse> {
-    const [totalCount, unlockedCount] = await Promise.all([
+  ): Promise<ProgressCalculationResult> {
+    const [totalAchievements, unlockedAchievements] = await Promise.all([
       this.prisma.achievement.count({ where: { gameId } }),
       this.prisma.userAchievement.count({
         where: { userId, achievement: { gameId } },
       }),
     ]);
 
-    if (totalCount === 0) {
+    if (totalAchievements === 0) {
       return { completionPercent: 0, status: 'backlog' };
     }
 
-    const rawPercent = (unlockedCount / totalCount) * 100;
+    const rawPercent = (unlockedAchievements / totalAchievements) * 100;
     const completionPercent = Math.round(rawPercent * 10) / 10;
 
     let status: CompletionStatus = 'backlog';
@@ -290,17 +292,17 @@ export class SteamService {
     const { steamId } = dto;
 
     try {
-      const userGamesData = await this.fetchUserGames(steamId);
+      const steamResponse = await this.fetchUserGames(steamId);
 
-      const games = userGamesData?.response?.games;
+      const games = steamResponse?.response?.games;
 
       if (!games) {
         throw new BadRequestException('Unable to retrieve games from Steam');
       }
 
-      await Promise.all(
-        games.map((game) => this.syncSingleGame(game, userId, steamId)),
-      );
+      for (const game of games) {
+        await this.syncSingleGame(game, userId, steamId);
+      }
 
       return { synced: games.length };
     } catch (error) {

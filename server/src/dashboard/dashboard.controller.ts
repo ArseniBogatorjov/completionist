@@ -19,4 +19,10 @@ export class DashboardController {
   async getGamesInProgress(@CurrentUser() user: User) {
     return await this.dashboardService.getGamesInProgress(user.id);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/near-completion')
+  async getNearCompletionGames(@CurrentUser() user: User) {
+    return await this.dashboardService.getNearCompletionGames(user.id);
+  }
 }

@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import type {
-  GamesInProgressResponse,
+import {
+  GameInProgressItem,
+  NearCompletionGameItem,
   UserStatsResponse,
-} from './types/dashboard.interface';
+} from './types/dashboard.types';
 
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   public async getUserStats(userId: string): Promise<UserStatsResponse> {
-    const [totalGames, completedGames, rawAvgResponse] = await Promise.all([
+    const [totalGames, completedGames, avgResult] = await Promise.all([
       this.prisma.userGame.count({
         where: {
           userId,
@@ -32,7 +33,7 @@ export class DashboardService {
       }),
     ]);
 
-    const rawAvg = rawAvgResponse._avg.completionPercent ?? 0;
+    const rawAvg = avgResult._avg.completionPercent ?? 0;
 
     const averageCompletionPercent = Math.round(rawAvg * 10) / 10;
 
@@ -45,7 +46,7 @@ export class DashboardService {
 
   public async getGamesInProgress(
     userId: string,
-  ): Promise<GamesInProgressResponse> {
+  ): Promise<GameInProgressItem[]> {
     const gamesInProgress = await this.prisma.userGame.findMany({
       where: {
         userId,
@@ -68,5 +69,63 @@ export class DashboardService {
     });
 
     return gamesInProgress;
+  }
+
+  public async getNearCompletionGames(
+    userId: string,
+  ): Promise<NearCompletionGameItem[]> {
+    const candidateGames = await this.prisma.userGame.findMany({
+      where: {
+        userId,
+        completionPercent: {
+          gte: 80,
+          lt: 100,
+        },
+      },
+      select: {
+        gameId: true,
+        completionPercent: true,
+        game: {
+          select: {
+            name: true,
+            coverUrl: true,
+          },
+        },
+      },
+      orderBy: {
+        completionPercent: 'desc',
+      },
+    });
+
+    const nearCompletionGames: NearCompletionGameItem[] = [];
+
+    for (const candidate of candidateGames) {
+      const [totalAchievements, unlockedAchievements] = await Promise.all([
+        this.prisma.achievement.count({
+          where: {
+            gameId: candidate.gameId,
+          },
+        }),
+        this.prisma.userAchievement.count({
+          where: {
+            userId,
+            achievement: { gameId: candidate.gameId },
+          },
+        }),
+      ]);
+
+      const remainingAchievements = totalAchievements - unlockedAchievements;
+
+      if (remainingAchievements >= 1 && remainingAchievements <= 3) {
+        nearCompletionGames.push({
+          ...candidate,
+          remainingAchievements,
+        });
+      }
+
+      if (nearCompletionGames.length === 3) break;
+    }
+
+    return nearCompletionGames;
   }
 }
