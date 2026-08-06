@@ -153,6 +153,7 @@ export class SteamService {
       this.logger.error(
         `Failed to save achievements for gameId ${gameId} (appId: ${appId}): ${error}`,
       );
+      throw error;
     }
   }
 
@@ -221,6 +222,7 @@ export class SteamService {
       this.logger.error(
         `Failed to save achievements for user ${userId}: ${error}`,
       );
+      throw error;
     }
   }
 

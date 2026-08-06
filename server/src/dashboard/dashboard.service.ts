@@ -77,10 +77,7 @@ export class DashboardService {
     const candidateGames = await this.prisma.userGame.findMany({
       where: {
         userId,
-        completionPercent: {
-          gte: 80,
-          lt: 100,
-        },
+        completionPercent: { gte: 80, lt: 100 },
       },
       select: {
         gameId: true,
@@ -89,36 +86,44 @@ export class DashboardService {
           select: {
             name: true,
             coverUrl: true,
+            _count: { select: { achievements: true } },
           },
         },
       },
-      orderBy: {
-        completionPercent: 'desc',
+      orderBy: { completionPercent: 'desc' },
+    });
+
+    const unlockedAchievements = await this.prisma.userAchievement.findMany({
+      where: {
+        userId,
+        achievement: {
+          gameId: { in: candidateGames.map((candidate) => candidate.gameId) },
+        },
+      },
+      select: {
+        achievement: { select: { gameId: true } },
       },
     });
 
     const nearCompletionGames: NearCompletionGameItem[] = [];
 
     for (const candidate of candidateGames) {
-      const [totalAchievements, unlockedAchievements] = await Promise.all([
-        this.prisma.achievement.count({
-          where: {
-            gameId: candidate.gameId,
-          },
-        }),
-        this.prisma.userAchievement.count({
-          where: {
-            userId,
-            achievement: { gameId: candidate.gameId },
-          },
-        }),
-      ]);
+      const total = candidate.game._count.achievements;
 
-      const remainingAchievements = totalAchievements - unlockedAchievements;
+      const unlocked = unlockedAchievements.filter(
+        (item) => item.achievement.gameId === candidate.gameId,
+      ).length;
+
+      const remainingAchievements = total - unlocked;
 
       if (remainingAchievements >= 1 && remainingAchievements <= 3) {
         nearCompletionGames.push({
-          ...candidate,
+          gameId: candidate.gameId,
+          completionPercent: candidate.completionPercent,
+          game: {
+            name: candidate.game.name,
+            coverUrl: candidate.game.coverUrl,
+          },
           remainingAchievements,
         });
       }

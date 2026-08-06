@@ -17,9 +17,9 @@ export interface GameInProgressItem {
 export interface NearCompletionGameItem {
   gameId: string;
   completionPercent: number;
-  remainingAchievements: number;
   game: {
     name: string;
     coverUrl: string | null;
   };
+  remainingAchievements: number;
 }
