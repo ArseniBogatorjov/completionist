@@ -11,7 +11,10 @@ export class SteamController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post('sync')
-  async syncUserGames(@CurrentUser() user: User, @Body() dto: SyncSteamDto) {
-    return this.steamService.syncUserGames(user.id, dto);
+  syncUserGames(@CurrentUser() user: User, @Body() dto: SyncSteamDto) {
+    this.steamService
+      .syncUserGames(user.id, dto)
+      .catch((error) => console.error(error));
+    return { message: 'synchronization started' };
   }
 }

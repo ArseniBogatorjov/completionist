@@ -2,17 +2,14 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SyncSteamDto } from './dto/sync-steam.dto';
-import type {
-  CompletionStatus,
-  ProgressCalculationResult,
-  SyncedGamesResponse,
-} from './types/steam.types';
+import { ProgressCalculationObject } from './types/steam.types';
 import type {
   SteamGame,
   SteamGameSchemaResponse,
   SteamGetOwnedGamesResponse,
   SteamPlayerAchievementsResponse,
 } from './types/steam-api.responses';
+import { setTimeout as sleep } from 'node:timers/promises';
 
 @Injectable()
 export class SteamService {
@@ -24,31 +21,6 @@ export class SteamService {
     private readonly prisma: PrismaService,
   ) {
     this.STEAM_API_KEY = configService.getOrThrow('STEAM_API_KEY');
-  }
-
-  private async calculateGameProgress(
-    userId: string,
-    gameId: string,
-  ): Promise<ProgressCalculationResult> {
-    const [totalAchievements, unlockedAchievements] = await Promise.all([
-      this.prisma.achievement.count({ where: { gameId } }),
-      this.prisma.userAchievement.count({
-        where: { userId, achievement: { gameId } },
-      }),
-    ]);
-
-    if (totalAchievements === 0) {
-      return { completionPercent: 0, status: 'backlog' };
-    }
-
-    const rawPercent = (unlockedAchievements / totalAchievements) * 100;
-    const completionPercent = Math.round(rawPercent * 10) / 10;
-
-    let status: CompletionStatus = 'backlog';
-    if (completionPercent === 100) status = 'completed';
-    else if (completionPercent > 0) status = 'playing';
-
-    return { completionPercent, status };
   }
 
   private async fetchUserGames(
@@ -65,7 +37,10 @@ export class SteamService {
 
       const response = await fetch(url);
 
-      if (!response.ok) return null;
+      if (!response.ok) {
+        this.logger.error(`Steam API returned status: ${response.status}`);
+        return null;
+      }
 
       return (await response.json()) as SteamGetOwnedGamesResponse;
     } catch (error) {
@@ -129,15 +104,15 @@ export class SteamService {
   private async saveGameAchievements(
     gameId: string,
     appId: number,
-  ): Promise<void> {
+  ): Promise<number> {
     try {
       const gameSchema = await this.fetchGameSchema(appId);
 
-      if (!gameSchema) return;
+      if (!gameSchema) return 0;
 
       const achievements = gameSchema.game?.availableGameStats?.achievements;
 
-      if (!achievements || achievements.length === 0) return;
+      if (!achievements || achievements.length === 0) return 0;
 
       await this.prisma.achievement.createMany({
         data: achievements.map((achievement) => ({
@@ -149,6 +124,8 @@ export class SteamService {
         })),
         skipDuplicates: true,
       });
+
+      return achievements.length;
     } catch (error) {
       this.logger.error(
         `Failed to save achievements for gameId ${gameId} (appId: ${appId}): ${error}`,
@@ -162,21 +139,21 @@ export class SteamService {
     steamId: string,
     gameId: string,
     appId: number,
-  ): Promise<void> {
+  ): Promise<number> {
     try {
       const playerAchievementsData = await this.fetchUserAchievements(
         steamId,
         appId,
       );
 
-      if (!playerAchievementsData) return;
+      if (!playerAchievementsData) return 0;
 
       const unlockedAchievements =
         playerAchievementsData.playerstats?.achievements?.filter(
           (achievement) => achievement.achieved === 1,
         );
 
-      if (!unlockedAchievements || unlockedAchievements.length === 0) return;
+      if (!unlockedAchievements || unlockedAchievements.length === 0) return 0;
 
       const achievementApiNames = unlockedAchievements.map(
         (achievement) => achievement.apiname,
@@ -218,6 +195,8 @@ export class SteamService {
           skipDuplicates: true,
         });
       }
+
+      return userAchievementsToCreate.length;
     } catch (error) {
       this.logger.error(
         `Failed to save achievements for user ${userId}: ${error}`,
@@ -230,29 +209,54 @@ export class SteamService {
     game: SteamGame,
     userId: string,
     steamId: string,
+    existingGamesMap: Map<number, string>,
   ): Promise<void> {
     try {
-      const savedGame = await this.prisma.game.upsert({
-        where: { steamAppId: game.appid },
-        update: {
-          name: game.name,
-        },
-        create: {
-          steamAppId: game.appid,
-          name: game.name,
-          coverUrl: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`,
-        },
-      });
+      let gameId = existingGamesMap.get(game.appid);
+      let totalAchievements = 0;
 
-      await this.saveGameAchievements(savedGame.id, game.appid);
-      await this.saveUserAchievements(
+      if (gameId) {
+        totalAchievements = await this.prisma.achievement.count({
+          where: { gameId },
+        });
+      } else {
+        const savedGame = await this.prisma.game.upsert({
+          where: { steamAppId: game.appid },
+          update: { name: game.name },
+          create: {
+            steamAppId: game.appid,
+            name: game.name,
+            coverUrl: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${game.appid}/header.jpg`,
+          },
+        });
+
+        gameId = savedGame.id;
+        totalAchievements = await this.saveGameAchievements(gameId, game.appid);
+      }
+
+      const unlockedAchievements = await this.saveUserAchievements(
         userId,
         steamId,
-        savedGame.id,
+        gameId,
         game.appid,
       );
 
-      const progress = await this.calculateGameProgress(userId, savedGame.id);
+      let progressObject: ProgressCalculationObject = {
+        completionPercent: 0,
+        status: 'backlog',
+      };
+
+      if (totalAchievements > 0) {
+        const progress =
+          Math.round((unlockedAchievements / totalAchievements) * 100 * 10) /
+          10;
+
+        if (progress === 100) {
+          progressObject = { completionPercent: progress, status: 'completed' };
+        } else if (progress > 0) {
+          progressObject = { completionPercent: progress, status: 'playing' };
+        }
+      }
 
       const lastPlayed = game.rtime_last_played
         ? new Date(game.rtime_last_played * 1000)
@@ -262,22 +266,22 @@ export class SteamService {
         where: {
           userId_gameId: {
             userId,
-            gameId: savedGame.id,
+            gameId,
           },
         },
         update: {
           playtimeMinutes: game.playtime_forever,
           lastPlayedAt: lastPlayed,
-          completionPercent: progress.completionPercent,
-          status: progress.status,
+          completionPercent: progressObject.completionPercent,
+          status: progressObject.status,
         },
         create: {
           userId,
-          gameId: savedGame.id,
+          gameId,
           playtimeMinutes: game.playtime_forever,
           lastPlayedAt: lastPlayed,
-          completionPercent: progress.completionPercent,
-          status: progress.status,
+          completionPercent: progressObject.completionPercent,
+          status: progressObject.status,
         },
       });
     } catch (error) {
@@ -287,10 +291,7 @@ export class SteamService {
     }
   }
 
-  public async syncUserGames(
-    userId: string,
-    dto: SyncSteamDto,
-  ): Promise<SyncedGamesResponse> {
+  public async syncUserGames(userId: string, dto: SyncSteamDto): Promise<void> {
     const { steamId } = dto;
 
     try {
@@ -302,11 +303,33 @@ export class SteamService {
         throw new BadRequestException('Unable to retrieve games from Steam');
       }
 
-      for (const game of games) {
-        await this.syncSingleGame(game, userId, steamId);
+      const filteredGames = games.filter((game) => game.playtime_forever > 0);
+
+      const existingGames = await this.prisma.game.findMany({
+        where: {
+          steamAppId: { in: filteredGames.map((game) => game.appid) },
+        },
+        select: { id: true, steamAppId: true },
+      });
+
+      const existingGamesMap = new Map<number, string>(
+        existingGames.map((g) => [g.steamAppId, g.id]),
+      );
+
+      const gameChunks: SteamGame[][] = [];
+
+      for (let i = 0; i < filteredGames.length; i += 3) {
+        gameChunks.push(filteredGames.slice(i, i + 3));
       }
 
-      return { synced: games.length };
+      for (const chunk of gameChunks) {
+        await sleep(500);
+        await Promise.all(
+          chunk.map((game) =>
+            this.syncSingleGame(game, userId, steamId, existingGamesMap),
+          ),
+        );
+      }
     } catch (error) {
       this.logger.error(`User sync failed for userId ${userId}:`, error);
       throw new BadRequestException('Steam synchronization failed');

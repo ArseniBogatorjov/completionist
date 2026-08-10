@@ -52,3 +52,6 @@ coverage
 .nyc_output
 .vercel
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Tasks file
+TODO.MD
