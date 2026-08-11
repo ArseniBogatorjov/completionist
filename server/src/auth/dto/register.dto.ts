@@ -1,7 +1,9 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
+  IsUrl,
   Matches,
   MinLength,
 } from 'class-validator';
@@ -22,4 +24,8 @@ export class RegisterDto {
       'Password must contain at least 1 uppercase letter, 1 lowercase letter, and 1 number or special character',
   })
   password: string;
+
+  @IsOptional()
+  @IsUrl({}, { message: 'Invalid URL format' })
+  avatarUrl: string;
 }

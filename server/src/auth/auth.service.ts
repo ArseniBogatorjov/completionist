@@ -34,7 +34,7 @@ export class AuthService {
   }
 
   public async register(dto: RegisterDto): Promise<RegisterResponse> {
-    const { username, email, password } = dto;
+    const { username, email, password, avatarUrl } = dto;
 
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
@@ -51,6 +51,7 @@ export class AuthService {
         username,
         email,
         passwordHash: hashedPassword,
+        avatarUrl,
       },
       select: {
         id: true,
@@ -118,7 +119,7 @@ export class AuthService {
           },
         ),
       };
-    } catch (err) {
+    } catch (error) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }

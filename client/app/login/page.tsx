@@ -2,29 +2,16 @@
 
 import { useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Lock, Mail } from 'lucide-react';
-
-export interface LoginResponse {
-  id: string;
-  username: string;
-  email: string | null;
-  avatarUrl: string | null;
-}
-
-// TODO: 1.add toast messages
-// TODO: 2.complete form styling and add login with steam
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -34,14 +21,13 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const data = await apiClient<LoginResponse>('/auth/login', {
+      await apiClient('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
 
-      console.log(`Successfully logged in: ${data.username}`);
-      window.location.href = '/';
-    } catch (error: unknown) {
+      router.push('/');
+    } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
@@ -56,7 +42,7 @@ export default function LoginPage() {
         <CardHeader className="pb-5">
           <CardTitle>Sign In</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email below to sign in to your account
           </CardDescription>
         </CardHeader>
 
@@ -102,9 +88,18 @@ export default function LoginPage() {
 
             <div className="mt-5">
               <Button type="submit" className="w-full">
-                Login
+                Sign In
               </Button>
             </div>
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <Link
+                href="/register"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                Sign Up
+              </Link>
+            </p>
           </form>
         </CardContent>
       </Card>
