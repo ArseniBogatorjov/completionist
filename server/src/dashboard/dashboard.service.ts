@@ -55,6 +55,7 @@ export class DashboardService {
       select: {
         game: {
           select: {
+            id: true,
             name: true,
             coverUrl: true,
           },

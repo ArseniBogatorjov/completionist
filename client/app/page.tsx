@@ -1,21 +1,19 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/apiClient';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: () => apiClient('/dashboard/stats'),
-  });
+  const handleLogout = async () => {
+    await apiClient('/auth/logout', {
+      method: 'POST',
+    });
+  };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (isError) {
-    return <div>Error while loading</div>;
-  }
-
-  return <main>{JSON.stringify(data)}</main>;
+  return (
+    <main>
+      <div>Hello!</div>
+      <Button onClick={handleLogout}>Logout</Button>
+    </main>
+  );
 }
