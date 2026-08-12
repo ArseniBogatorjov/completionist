@@ -1,10 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  GameInProgressItem,
-  NearCompletionGameItem,
-  UserStatsResponse,
-} from './types/dashboard.types';
+import { GameDetails, GameInProgressItem, NearCompletionGameItem, UserStatsResponse, } from './types/dashboard.types';
 
 @Injectable()
 export class DashboardService {
@@ -133,5 +129,51 @@ export class DashboardService {
     }
 
     return nearCompletionGames;
+  }
+
+  public async getGameDetails(
+    userId: string,
+    gameId: string,
+  ): Promise<GameDetails> {
+    const gameDetails = await this.prisma.userGame.findUnique({
+      where: {
+        userId_gameId: {
+          userId,
+          gameId,
+        },
+      },
+      select: {
+        playtimeMinutes: true,
+        status: true,
+        completionPercent: true,
+        game: {
+          select: {
+            name: true,
+            coverUrl: true,
+            achievements: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                iconUrl: true,
+                globalRarity: true,
+                isMissable: true,
+                userAchievements: {
+                  where: { userId },
+                  select: { unlockedAt: true },
+                },
+              },
+              orderBy: { globalRarity: 'desc' },
+            },
+          },
+        },
+      },
+    });
+
+    if (!gameDetails) {
+      throw new NotFoundException('Game not found in user profile');
+    }
+
+    return gameDetails as unknown as GameDetails;
   }
 }

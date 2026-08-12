@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { User } from '@prisma/client';
@@ -24,5 +24,11 @@ export class DashboardController {
   @Get('/near-completion')
   async getNearCompletionGames(@CurrentUser() user: User) {
     return await this.dashboardService.getNearCompletionGames(user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/details/:id')
+  async getDetail(@Param('id') gameId: string, @CurrentUser() user: User) {
+    return await this.dashboardService.getGameDetails(user.id, gameId);
   }
 }

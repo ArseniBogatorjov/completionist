@@ -6,6 +6,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum CompletionStatus {
+  backlog
+  playing
+  completed
+}
+
 model User {
   id           String   @id @default(uuid())
   steamId      String?  @unique
@@ -52,14 +58,14 @@ model Achievement {
 }
 
 model UserGame {
-  id                String    @id @default(uuid())
+  id                String           @id @default(uuid())
   userId            String
   gameId            String
-  user              User      @relation(fields: [userId], references: [id])
-  game              Game      @relation(fields: [gameId], references: [id])
-  playtimeMinutes   Int       @default(0)
-  completionPercent Float     @default(0.0)
-  status            String    @default("backlog")
+  user              User             @relation(fields: [userId], references: [id])
+  game              Game             @relation(fields: [gameId], references: [id])
+  playtimeMinutes   Int              @default(0)
+  completionPercent Float            @default(0.0)
+  status            CompletionStatus @default(backlog)
   lastPlayedAt      DateTime?
 
   @@unique([userId, gameId])
