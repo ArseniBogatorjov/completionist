@@ -27,7 +27,7 @@ export class DashboardController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('/details/:id')
+  @Get('/game/:id')
   async getDetail(@Param('id') gameId: string, @CurrentUser() user: User) {
     return await this.dashboardService.getGameDetails(user.id, gameId);
   }

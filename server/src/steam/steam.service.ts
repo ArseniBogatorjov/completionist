@@ -7,6 +7,7 @@ import type {
   SteamGame,
   SteamGameSchemaResponse,
   SteamGetOwnedGamesResponse,
+  SteamGlobalAchievementsResponse,
   SteamPlayerAchievementsResponse,
 } from './types/steam-api.responses';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -75,6 +76,29 @@ export class SteamService {
     }
   }
 
+  private async fetchGlobalAchievementPercentages(
+    appId: number,
+  ): Promise<SteamGlobalAchievementsResponse | null> {
+    try {
+      const url = new URL(
+        'http://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v0002/',
+      );
+
+      url.searchParams.append('gameid', appId.toString());
+
+      const response = await fetch(url);
+
+      if (!response.ok) return null;
+
+      return (await response.json()) as SteamGlobalAchievementsResponse;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to fetch global percentages for appId ${appId}: ${error}`,
+      );
+      return null;
+    }
+  }
+
   private async fetchUserAchievements(
     steamId: string,
     appId: number,
@@ -106,13 +130,26 @@ export class SteamService {
     appId: number,
   ): Promise<number> {
     try {
-      const gameSchema = await this.fetchGameSchema(appId);
+      const [gameSchema, globalPercentagesData] = await Promise.all([
+        this.fetchGameSchema(appId),
+        this.fetchGlobalAchievementPercentages(appId),
+      ]);
 
       if (!gameSchema) return 0;
 
       const achievements = gameSchema.game?.availableGameStats?.achievements;
 
       if (!achievements || achievements.length === 0) return 0;
+
+      const rarityMap = new Map<string, number>();
+      const globalList =
+        globalPercentagesData?.achievementpercentages?.achievements;
+
+      if (globalList) {
+        for (const item of globalList) {
+          rarityMap.set(item.name, Number(item.percent));
+        }
+      }
 
       await this.prisma.achievement.createMany({
         data: achievements.map((achievement) => ({
@@ -121,6 +158,7 @@ export class SteamService {
           name: achievement.displayName,
           description: achievement.description || null,
           iconUrl: achievement.icon,
+          globalRarity: rarityMap.get(achievement.name) ?? null,
         })),
         skipDuplicates: true,
       });
@@ -213,13 +251,8 @@ export class SteamService {
   ): Promise<void> {
     try {
       let gameId = existingGamesMap.get(game.appid);
-      let totalAchievements = 0;
 
-      if (gameId) {
-        totalAchievements = await this.prisma.achievement.count({
-          where: { gameId },
-        });
-      } else {
+      if (!gameId) {
         const savedGame = await this.prisma.game.upsert({
           where: { steamAppId: game.appid },
           update: { name: game.name },
@@ -231,8 +264,12 @@ export class SteamService {
         });
 
         gameId = savedGame.id;
-        totalAchievements = await this.saveGameAchievements(gameId, game.appid);
       }
+
+      const totalAchievements = await this.saveGameAchievements(
+        gameId,
+        game.appid,
+      );
 
       const unlockedAchievements = await this.saveUserAchievements(
         userId,
@@ -252,9 +289,15 @@ export class SteamService {
           10;
 
         if (progress === 100) {
-          progressObject = { completionPercent: progress, status: 'completed' };
+          progressObject = {
+            completionPercent: progress,
+            status: 'completed',
+          };
         } else if (progress > 0) {
-          progressObject = { completionPercent: progress, status: 'playing' };
+          progressObject = {
+            completionPercent: progress,
+            status: 'playing',
+          };
         }
       }
 

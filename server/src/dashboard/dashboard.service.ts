@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { GameDetails, GameInProgressItem, NearCompletionGameItem, UserStatsResponse, } from './types/dashboard.types';
+import {
+  GameDetails,
+  GameInProgressItem,
+  NearCompletionGameItem,
+  UserStatsResponse,
+} from './types/dashboard.types';
 
 @Injectable()
 export class DashboardService {

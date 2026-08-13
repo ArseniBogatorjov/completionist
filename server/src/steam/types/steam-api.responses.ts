@@ -48,3 +48,14 @@ export interface SteamPlayerAchievementsResponse {
     error?: string;
   };
 }
+
+export interface SteamGlobalAchievementItem {
+  name: string;
+  percent: number;
+}
+
+export interface SteamGlobalAchievementsResponse {
+  achievementpercentages?: {
+    achievements?: SteamGlobalAchievementItem[];
+  };
+}
