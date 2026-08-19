@@ -15,9 +15,9 @@ export class DashboardController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('/playing')
-  async getGamesInProgress(@CurrentUser() user: User) {
-    return await this.dashboardService.getGamesInProgress(user.id);
+  @Get('/library')
+  async getUserGames(@CurrentUser() user: User) {
+    return await this.dashboardService.getUserGames(user.id);
   }
 
   @UseGuards(AuthGuard('jwt'))

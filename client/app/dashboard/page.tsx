@@ -3,14 +3,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/apiClient';
 import StatisticsSection from '@/components/dashboard/StatisticsSection';
-import type { PlayingGame } from '@/types/dashboard/dashboard.types';
-import ProgressGamesSection from '@/components/dashboard/ProgressGamesSection';
-
-interface DashboardStats {
-  totalGames: number;
-  completedGames: number;
-  averageCompletionPercent: number;
-}
+import GamesList from '@/components/dashboard/GamesList';
+import { useState } from 'react';
+import FilterButtons from '@/components/dashboard/FilterButtons';
+import type {
+  DashboardStats,
+  FilterOptions,
+} from '@/types/dashboard/dashboard.types';
+import type { GameInProgress } from '@/types/dashboard/game.types';
+import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
+import DashboardError from '@/components/dashboard/DashboardError';
 
 export default function Dashboard() {
   const {
@@ -23,20 +25,22 @@ export default function Dashboard() {
   });
 
   const {
-    data: playingGames,
+    data: GamesInProgress,
     isLoading: isPlayingLoading,
     isError: isPlayingError,
-  } = useQuery<PlayingGame[]>({
+  } = useQuery<GameInProgress[]>({
     queryKey: ['dashboard', 'playing'],
-    queryFn: () => apiClient('/dashboard/playing'),
+    queryFn: () => apiClient('/dashboard/library'),
   });
 
+  const [filter, setFilter] = useState<FilterOptions>('all');
+
   if (isStatsLoading || isPlayingLoading) {
-    return <div>Loading...</div>;
+    return <DashboardSkeleton />;
   }
 
   if (isStatsError || isPlayingError) {
-    return <div>Error while loading</div>;
+    return <DashboardError />;
   }
 
   return (
@@ -47,8 +51,8 @@ export default function Dashboard() {
           completedGames={stats?.completedGames ?? 0}
           averageCompletionPercent={stats?.averageCompletionPercent ?? 0}
         />
-
-        <ProgressGamesSection games={playingGames ?? []} />
+        <FilterButtons filter={filter} setFilter={setFilter} />
+        <GamesList games={GamesInProgress ?? []} />
       </div>
     </main>
   );

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   GameDetails,
-  GameInProgressItem,
+  GameItem,
   NearCompletionGameItem,
   UserStatsResponse,
 } from './types/dashboard.types';
@@ -45,13 +45,10 @@ export class DashboardService {
     };
   }
 
-  public async getGamesInProgress(
-    userId: string,
-  ): Promise<GameInProgressItem[]> {
-    const gamesInProgress = await this.prisma.userGame.findMany({
+  public async getUserGames(userId: string): Promise<GameItem[]> {
+    const games = await this.prisma.userGame.findMany({
       where: {
         userId,
-        status: 'playing',
       },
       select: {
         game: {
@@ -64,13 +61,14 @@ export class DashboardService {
         completionPercent: true,
         playtimeMinutes: true,
         lastPlayedAt: true,
+        status: true,
       },
       orderBy: {
         lastPlayedAt: 'desc',
       },
     });
 
-    return gamesInProgress;
+    return games;
   }
 
   public async getNearCompletionGames(

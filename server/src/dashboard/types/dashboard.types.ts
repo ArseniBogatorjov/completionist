@@ -6,7 +6,7 @@ export interface UserStatsResponse {
   averageCompletionPercent: number;
 }
 
-export interface GameInProgressItem {
+export interface GameItem {
   game: {
     name: string;
     coverUrl: string | null;

@@ -3,7 +3,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { apiClient } from '@/lib/apiClient';
-import type { GameDetails } from '@/types/dashboard/dashboard.types';
+import type { GameDetails } from '@/types/dashboard/game.types';
+import GameOverall from '@/components/game/GameOverall';
 
 export default function GamePage() {
   const params = useParams();
@@ -13,9 +14,38 @@ export default function GamePage() {
     queryKey: ['game', gameId],
     queryFn: () => apiClient<GameDetails>(`/dashboard/game/${gameId}`),
   });
+
+  const unlockedAchievements =
+    data?.game.achievements?.filter(
+      (achievement) =>
+        achievement.userAchievements && achievement.userAchievements.length > 0,
+    ).length ?? 0;
+
+  if (isError) {
+    return <div>Error while loading data</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div>
-      <div>{data?.game.name}</div>
-    </div>
+    <main className="min-h-screen p-6 md:p-10 text-zinc-100">
+      <div className="mx-auto max-w-7xl space-y-10">
+        <GameOverall
+          name={data?.game.name ?? 'Game name is missing'}
+          poster={data?.game.coverUrl ?? ''}
+          playtimeMinutes={data?.playtimeMinutes ?? 0}
+          completionPercent={data?.completionPercent ?? 0}
+          status={
+            (data?.status ?? data?.completionPercent === 100)
+              ? 'completed'
+              : 'playing'
+          }
+          totalAchievements={data?.game.achievements?.length ?? 0}
+          unlockedAchievements={unlockedAchievements}
+        />
+      </div>
+    </main>
   );
 }

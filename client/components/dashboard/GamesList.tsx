@@ -1,23 +1,20 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { PlayingGame } from '@/types/dashboard/dashboard.types';
+import { Progress } from '@/components/ui/progress';
+import type { GameInProgress } from '@/types/dashboard/game.types';
 
-interface PlayingGamesSectionProps {
-  games: PlayingGame[];
+interface GamesList {
+  games: GameInProgress[];
 }
 
-export default function ProgressGamesSection({
-  games,
-}: PlayingGamesSectionProps) {
+export default function GamesList({ games }: GamesList) {
   return (
     <section>
-      <h2 className="mb-6 text-2xl font-bold tracking-tight">
-        Currently Playing
-      </h2>
+      <h2 className="mb-6 text-2xl font-bold tracking-tight">Games library</h2>
 
       {games.length === 0 ? (
-        <p className="text-zinc-500">No games in progress yet.</p>
+        <p className="text-zinc-500">No games to display</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {games.map((item) => (
@@ -58,14 +55,10 @@ export default function ProgressGamesSection({
                     </span>
                   </div>
 
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800/50">
-                    <div
-                      className="h-full rounded-full bg-teal-400 shadow-[0_0_10px_rgba(102,252,241,0.5)] transition-all duration-1000 ease-out"
-                      style={{
-                        width: `${item.completionPercent}%`,
-                      }}
-                    />
-                  </div>
+                  <Progress
+                    value={item.completionPercent}
+                    className="h-2 bg-zinc-800/50"
+                  />
                 </CardContent>
               </Card>
             </Link>

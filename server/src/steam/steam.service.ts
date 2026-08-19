@@ -128,18 +128,11 @@ export class SteamService {
   private async saveGameAchievements(
     gameId: string,
     appId: number,
+    achievements: any[],
   ): Promise<number> {
     try {
-      const [gameSchema, globalPercentagesData] = await Promise.all([
-        this.fetchGameSchema(appId),
-        this.fetchGlobalAchievementPercentages(appId),
-      ]);
-
-      if (!gameSchema) return 0;
-
-      const achievements = gameSchema.game?.availableGameStats?.achievements;
-
-      if (!achievements || achievements.length === 0) return 0;
+      const globalPercentagesData =
+        await this.fetchGlobalAchievementPercentages(appId);
 
       const rarityMap = new Map<string, number>();
       const globalList =
@@ -250,6 +243,13 @@ export class SteamService {
     existingGamesMap: Map<number, string>,
   ): Promise<void> {
     try {
+      const gameSchema = await this.fetchGameSchema(game.appid);
+      const achievements = gameSchema?.game?.availableGameStats?.achievements;
+
+      if (!achievements || achievements.length === 0) {
+        return;
+      }
+
       let gameId = existingGamesMap.get(game.appid);
 
       if (!gameId) {
@@ -269,6 +269,7 @@ export class SteamService {
       const totalAchievements = await this.saveGameAchievements(
         gameId,
         game.appid,
+        achievements,
       );
 
       const unlockedAchievements = await this.saveUserAchievements(
