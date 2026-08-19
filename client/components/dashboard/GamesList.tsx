@@ -2,10 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { GameInProgress } from '@/types/dashboard/game.types';
+import { LibraryGame } from '@/types/dashboard/game.types';
 
 interface GamesList {
-  games: GameInProgress[];
+  games: LibraryGame[];
 }
 
 export default function GamesList({ games }: GamesList) {

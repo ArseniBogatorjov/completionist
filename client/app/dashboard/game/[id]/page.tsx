@@ -2,9 +2,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
-import { apiClient } from '@/lib/apiClient';
+import { apiClient } from '@/lib/api/apiClient';
 import type { GameDetails } from '@/types/dashboard/game.types';
 import GameOverall from '@/components/game/GameOverall';
+import DataErrorPage from '@/components/error/DataErrorPage';
 
 export default function GamePage() {
   const params = useParams();
@@ -22,11 +23,12 @@ export default function GamePage() {
     ).length ?? 0;
 
   if (isError) {
-    return <div>Error while loading data</div>;
+    return <DataErrorPage />;
   }
 
   if (isLoading) {
     return <div>Loading...</div>;
+    // TODO: ADD SKELETON
   }
 
   return (
@@ -37,11 +39,7 @@ export default function GamePage() {
           poster={data?.game.coverUrl ?? ''}
           playtimeMinutes={data?.playtimeMinutes ?? 0}
           completionPercent={data?.completionPercent ?? 0}
-          status={
-            (data?.status ?? data?.completionPercent === 100)
-              ? 'completed'
-              : 'playing'
-          }
+          status={data?.status}
           totalAchievements={data?.game.achievements?.length ?? 0}
           unlockedAchievements={unlockedAchievements}
         />

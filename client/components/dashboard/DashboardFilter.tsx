@@ -7,7 +7,7 @@ interface FiltersProps {
   setFilter: Dispatch<SetStateAction<FilterOptions>>;
 }
 
-export default function FilterButtons({ filter, setFilter }: FiltersProps) {
+export default function DashboardFilter({ filter, setFilter }: FiltersProps) {
   return (
     <div className="inline-flex w-fit items-center rounded-lg border border-white/5 bg-black/20 p-1 backdrop-blur-md">
       <Button
@@ -35,6 +35,15 @@ export default function FilterButtons({ filter, setFilter }: FiltersProps) {
         className="min-w-24"
       >
         Completed
+      </Button>
+
+      <Button
+        size="sm"
+        variant={filter === 'backlog' ? 'default' : 'ghost'}
+        onClick={() => setFilter('backlog')}
+        className="min-w-24"
+      >
+        Backlog
       </Button>
     </div>
   );

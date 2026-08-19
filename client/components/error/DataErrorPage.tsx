@@ -1,7 +1,7 @@
 import { AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function DashboardError() {
+export default function DataErrorPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 text-zinc-100">
       <Card className="w-full max-w-md border-white/5 bg-black/20 text-center shadow-2xl backdrop-blur-md">

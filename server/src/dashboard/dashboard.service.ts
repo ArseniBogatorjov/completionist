@@ -1,17 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  GameDetails,
-  GameItem,
-  NearCompletionGameItem,
-  UserStatsResponse,
-} from './types/dashboard.types';
+import type { UserStats } from './types/stats.types';
+import type { Game, GameDetails, NearCompletionGame } from './types/game.types';
 
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async getUserStats(userId: string): Promise<UserStatsResponse> {
+  public async getUserStats(userId: string): Promise<UserStats> {
     const [totalGames, completedGames, avgResult] = await Promise.all([
       this.prisma.userGame.count({
         where: {
@@ -45,7 +41,7 @@ export class DashboardService {
     };
   }
 
-  public async getUserGames(userId: string): Promise<GameItem[]> {
+  public async getUserGames(userId: string): Promise<Game[]> {
     const games = await this.prisma.userGame.findMany({
       where: {
         userId,
@@ -73,7 +69,7 @@ export class DashboardService {
 
   public async getNearCompletionGames(
     userId: string,
-  ): Promise<NearCompletionGameItem[]> {
+  ): Promise<NearCompletionGame[]> {
     const candidateGames = await this.prisma.userGame.findMany({
       where: {
         userId,
@@ -105,7 +101,7 @@ export class DashboardService {
       },
     });
 
-    const nearCompletionGames: NearCompletionGameItem[] = [];
+    const nearCompletionGames: NearCompletionGame[] = [];
 
     for (const candidate of candidateGames) {
       const total = candidate.game._count.achievements;

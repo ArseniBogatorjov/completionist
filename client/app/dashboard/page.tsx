@@ -1,18 +1,18 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/apiClient';
+import { apiClient } from '@/lib/api/apiClient';
 import StatisticsSection from '@/components/dashboard/StatisticsSection';
 import GamesList from '@/components/dashboard/GamesList';
 import { useState } from 'react';
-import FilterButtons from '@/components/dashboard/FilterButtons';
+import DashboardFilter from '@/components/dashboard/DashboardFilter';
 import type {
   DashboardStats,
   FilterOptions,
 } from '@/types/dashboard/dashboard.types';
-import type { GameInProgress } from '@/types/dashboard/game.types';
-import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
-import DashboardError from '@/components/dashboard/DashboardError';
+import type { LibraryGame } from '@/types/dashboard/game.types';
+import DataErrorPage from '@/components/error/DataErrorPage';
+import { filterGames } from '@/lib/dashboard/filter.utils';
 
 export default function Dashboard() {
   const {
@@ -25,22 +25,27 @@ export default function Dashboard() {
   });
 
   const {
-    data: GamesInProgress,
+    data: games,
     isLoading: isPlayingLoading,
     isError: isPlayingError,
-  } = useQuery<GameInProgress[]>({
+  } = useQuery<LibraryGame[]>({
     queryKey: ['dashboard', 'playing'],
     queryFn: () => apiClient('/dashboard/library'),
   });
 
   const [filter, setFilter] = useState<FilterOptions>('all');
 
+  const filteredGames = filterGames(filter, games ?? []);
+
   if (isStatsLoading || isPlayingLoading) {
-    return <DashboardSkeleton />;
+    return <DataErrorPage />;
   }
 
   if (isStatsError || isPlayingError) {
-    return <DashboardError />;
+    return <DataErrorPage />;
+  }
+
+  if (games && games.length > 0) {
   }
 
   return (
@@ -51,8 +56,8 @@ export default function Dashboard() {
           completedGames={stats?.completedGames ?? 0}
           averageCompletionPercent={stats?.averageCompletionPercent ?? 0}
         />
-        <FilterButtons filter={filter} setFilter={setFilter} />
-        <GamesList games={GamesInProgress ?? []} />
+        <DashboardFilter filter={filter} setFilter={setFilter} />
+        <GamesList games={filteredGames} />
       </div>
     </main>
   );

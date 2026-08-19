@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Image as ImageIcon, Lock, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/apiClient';
+import { apiClient } from '@/lib/api/apiClient';
 
 export default function RegisterPage() {
   const router = useRouter();

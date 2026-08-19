@@ -4,4 +4,4 @@ export interface DashboardStats {
   averageCompletionPercent: number;
 }
 
-export type FilterOptions = 'all' | 'playing' | 'completed';
+export type FilterOptions = 'all' | 'playing' | 'completed' | 'backlog';

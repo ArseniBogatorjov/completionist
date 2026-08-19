@@ -1,6 +1,6 @@
 'use client';
 
-import { apiClient } from '@/lib/apiClient';
+import { apiClient } from '@/lib/api/apiClient';
 import { Button } from '@/components/ui/button';
 
 export default function Home() {

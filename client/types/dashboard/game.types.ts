@@ -13,7 +13,7 @@ export interface GameDetails {
   game: Game;
 }
 
-export interface GameInProgress {
+export interface LibraryGame {
   game: {
     id: string;
     name: string;
@@ -22,6 +22,7 @@ export interface GameInProgress {
   completionPercent: number;
   playtimeMinutes: number;
   lastPlayedAt: number;
+  status: CompletionStatus;
 }
 
 export type CompletionStatus = 'backlog' | 'playing' | 'completed';
