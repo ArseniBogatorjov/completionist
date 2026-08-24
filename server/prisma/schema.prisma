@@ -17,7 +17,7 @@ model User {
   steamId      String?  @unique
   username     String
   avatarUrl    String?
-  email        String?  @unique
+  email        String   @unique
   passwordHash String?
   telegramId   BigInt?  @unique
   createdAt    DateTime @default(now())

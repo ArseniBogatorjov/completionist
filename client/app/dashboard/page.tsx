@@ -6,13 +6,11 @@ import StatisticsSection from '@/components/dashboard/StatisticsSection';
 import GamesList from '@/components/dashboard/GamesList';
 import { useState } from 'react';
 import DashboardFilter from '@/components/dashboard/DashboardFilter';
-import type {
-  DashboardStats,
-  FilterOptions,
-} from '@/types/dashboard/dashboard.types';
+import { DashboardStats, FilterOptions, } from '@/types/dashboard/dashboard.types';
 import type { LibraryGame } from '@/types/dashboard/game.types';
 import DataErrorPage from '@/components/error/DataErrorPage';
 import { filterGames } from '@/lib/dashboard/filter.utils';
+import Searchbar from '@/components/dashboard/Searchbar';
 
 export default function Dashboard() {
   const {
@@ -34,6 +32,7 @@ export default function Dashboard() {
   });
 
   const [filter, setFilter] = useState<FilterOptions>('all');
+  const [search, setSearch] = useState<string>('');
 
   const filteredGames = filterGames(filter, games ?? []);
 
@@ -56,7 +55,10 @@ export default function Dashboard() {
           completedGames={stats?.completedGames ?? 0}
           averageCompletionPercent={stats?.averageCompletionPercent ?? 0}
         />
-        <DashboardFilter filter={filter} setFilter={setFilter} />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <DashboardFilter filter={filter} setFilter={setFilter} />
+          <Searchbar search={search} setSearch={setSearch} />
+        </div>
         <GamesList games={filteredGames} />
       </div>
     </main>
