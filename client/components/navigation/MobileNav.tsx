@@ -11,9 +11,11 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Gamepad2, LayoutDashboard, LogIn, Menu, UserPlus } from 'lucide-react';
+import { useAuth } from '@/providers/AuthProvider';
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const { user, isLoading } = useAuth();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -39,42 +41,46 @@ export function MobileNav() {
           </SheetTitle>
         </SheetHeader>
 
-        <nav className="flex flex-col gap-4 mt-6">
+        <nav className="mt-6 flex flex-col gap-4">
           <Link
             href="/"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 text-base text-zinc-400 transition-colors hover:text-teal-400 py-2"
+            className="flex items-center gap-3 py-2 text-base text-zinc-400 transition-colors hover:text-teal-400"
           >
             Main
           </Link>
 
-          <Link
-            href="/dashboard"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-3 text-base text-zinc-400 transition-colors hover:text-teal-400 py-2"
-          >
-            <LayoutDashboard className="h-5 w-5" />
-            Dashboard
-          </Link>
-
-          <div className="my-2 border-t border-white/10 pt-4 flex flex-col gap-3">
-            <Link href="/login" onClick={() => setOpen(false)}>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-zinc-300 hover:text-teal-400"
-              >
-                <LogIn className="mr-2 h-4 w-4" />
-                Login
-              </Button>
+          {!isLoading && user && (
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 py-2 text-base text-zinc-400 transition-colors hover:text-teal-400"
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              Dashboard
             </Link>
+          )}
 
-            <Link href="/register" onClick={() => setOpen(false)}>
-              <Button className="w-full justify-start border border-teal-400/50 bg-teal-400/10 text-teal-400 transition-all hover:bg-teal-400 hover:text-black">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Register
-              </Button>
-            </Link>
-          </div>
+          {!isLoading && !user && (
+            <div className="my-2 flex flex-col gap-3 border-t border-white/10 pt-4">
+              <Link href="/login" onClick={() => setOpen(false)}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-zinc-300 hover:text-teal-400"
+                >
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </Button>
+              </Link>
+
+              <Link href="/register" onClick={() => setOpen(false)}>
+                <Button className="w-full justify-start border border-teal-400/50 bg-teal-400/10 text-teal-400 transition-all hover:bg-teal-400 hover:text-black">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Register
+                </Button>
+              </Link>
+            </div>
+          )}
         </nav>
       </SheetContent>
     </Sheet>

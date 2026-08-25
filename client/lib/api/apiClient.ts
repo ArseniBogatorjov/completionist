@@ -1,3 +1,5 @@
+let refreshPromise: Promise<Response> | null = null;
+
 export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -18,34 +20,34 @@ export async function apiClient<T>(
   let response = await fetch(fullUrl, config);
 
   if (response.status === 401 && !endpoint.startsWith('/auth/')) {
-    const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    if (!refreshPromise) {
+      refreshPromise = fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      }).finally(() => {
+        refreshPromise = null;
+      });
+    }
+
+    const refreshRes = await refreshPromise;
 
     if (refreshRes.ok) {
       response = await fetch(fullUrl, config);
     } else {
-      window.location.href = '/login';
       throw new Error('Session expired');
     }
   }
 
   if (!response.ok) {
     let errorMessage = 'An unexpected error occurred';
-
     try {
       const errorData = await response.json();
-
-      if (Array.isArray(errorData.message)) {
-        errorMessage = errorData.message[0];
-      } else if (errorData.message) {
-        errorMessage = errorData.message;
-      }
-    } catch (error) {
+      errorMessage = Array.isArray(errorData.message)
+        ? errorData.message[0]
+        : errorData.message || errorMessage;
+    } catch {
       errorMessage = `HTTP error! status: ${response.status}`;
     }
-
     throw new Error(errorMessage);
   }
 

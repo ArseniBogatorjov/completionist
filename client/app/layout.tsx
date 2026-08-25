@@ -4,6 +4,7 @@ import './globals.css';
 import QueryProvider from '@/providers/QueryProvider';
 import Header from '@/components/navigation/Header';
 import { ReactNode } from 'react';
+import { AuthProvider } from '@/providers/AuthProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -31,8 +32,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col animated-dark-bg text-zinc-50 font-sans">
-        <Header />
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <Header />
+            {children}
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );
