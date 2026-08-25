@@ -17,10 +17,7 @@ export async function apiClient<T>(
 
   let response = await fetch(fullUrl, config);
 
-  if (
-    (response.status === 401 || response.status === 404) &&
-    !endpoint.startsWith('/auth/')
-  ) {
+  if (response.status === 401 && !endpoint.startsWith('/auth/')) {
     const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',

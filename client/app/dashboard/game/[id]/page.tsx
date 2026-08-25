@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { apiClient } from '@/lib/api/apiClient';
 import type { GameDetails } from '@/types/dashboard/game.types';
-import GameOverall from '@/components/dashboard/game/GameOverall';
+import GameOverall from '@/components/game/GameOverall';
 import DataErrorPage from '@/components/error/DataErrorPage';
 
 export default function GamePage() {

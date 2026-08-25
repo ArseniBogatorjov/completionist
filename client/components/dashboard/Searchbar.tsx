@@ -6,8 +6,7 @@ interface SearchbarProps {
   setSearch: Dispatch<SetStateAction<string>>;
 }
 
-//TODO: deal with rerender on each key press
-
+//TODO: implement search and deal with rerenders
 export default function Searchbar({ search, setSearch }: SearchbarProps) {
   return (
     <Input
