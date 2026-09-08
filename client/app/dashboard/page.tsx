@@ -6,10 +6,13 @@ import StatisticsSection from '@/components/dashboard/StatisticsSection';
 import GamesList from '@/components/dashboard/GamesList';
 import { useState } from 'react';
 import DashboardFilter from '@/components/dashboard/DashboardFilter';
-import { DashboardStats, FilterOptions, } from '@/types/dashboard/dashboard.types';
+import {
+  DashboardStats,
+  FilterOptions,
+} from '@/types/dashboard/dashboard.types';
 import type { LibraryGame } from '@/types/dashboard/game.types';
 import DataErrorPage from '@/components/error/DataErrorPage';
-import { filterGames } from '@/lib/dashboard/filter.utils';
+import { getDisplayedGames } from '@/lib/dashboard/filter.utils';
 import Searchbar from '@/components/dashboard/Searchbar';
 
 export default function Dashboard() {
@@ -34,7 +37,7 @@ export default function Dashboard() {
   const [filter, setFilter] = useState<FilterOptions>('all');
   const [search, setSearch] = useState<string>('');
 
-  const filteredGames = filterGames(filter, games ?? []);
+  const filteredGames = getDisplayedGames(games ?? [], filter, search);
 
   if (isStatsLoading || isPlayingLoading) {
     return <DataErrorPage />;
@@ -42,9 +45,6 @@ export default function Dashboard() {
 
   if (isStatsError || isPlayingError) {
     return <DataErrorPage />;
-  }
-
-  if (games && games.length > 0) {
   }
 
   return (
