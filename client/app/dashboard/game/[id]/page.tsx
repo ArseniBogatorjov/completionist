@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api/apiClient';
 import type { GameDetails } from '@/types/dashboard/game.types';
 import GameOverall from '@/components/game/GameOverall';
 import DataErrorPage from '@/components/error/DataErrorPage';
+import AchievementList from '@/components/game/AchievementList';
 
 export default function GamePage() {
   const params = useParams();
@@ -28,7 +29,6 @@ export default function GamePage() {
 
   if (isLoading) {
     return <div>Loading...</div>;
-    // TODO: ADD SKELETON
   }
 
   return (
@@ -39,10 +39,11 @@ export default function GamePage() {
           poster={data?.game.coverUrl ?? ''}
           playtimeMinutes={data?.playtimeMinutes ?? 0}
           completionPercent={data?.completionPercent ?? 0}
-          status={data?.status}
+          status={data?.status ?? 'playing'}
           totalAchievements={data?.game.achievements?.length ?? 0}
           unlockedAchievements={unlockedAchievements}
         />
+        <AchievementList achievements={data?.game.achievements ?? []} />
       </div>
     </main>
   );

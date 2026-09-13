@@ -19,6 +19,7 @@ export default function GameCard({ game }: GameCardProps) {
                 src={game.game.coverUrl}
                 alt={game.game.name}
                 fill
+                loading="lazy"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />

@@ -3,7 +3,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Gamepad2, Trophy } from 'lucide-react';
 import Image from 'next/image';
-import { CompletionStatus } from '@/types/dashboard/dashboard.types';
+import { CompletionStatus } from '@/types/dashboard/game.types';
 
 interface GameOverallProps {
   name: string;
@@ -35,6 +35,7 @@ export default function GameOverall({
               src={poster}
               alt={name}
               fill
+              loading="eager"
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 320px"
             />
