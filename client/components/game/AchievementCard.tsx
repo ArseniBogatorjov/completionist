@@ -13,7 +13,7 @@ export default function AchievementCard({
   isMissable,
   userAchievements,
 }: AchievementCardProps) {
-  const isUnlocked = userAchievements && userAchievements.length > 0;
+  const isUnlocked = userAchievements.length > 0;
 
   const unlockedDate = isUnlocked
     ? new Date(userAchievements[0].unlockedAt).toLocaleDateString('en-US', {

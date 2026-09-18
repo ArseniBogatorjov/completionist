@@ -1,13 +1,16 @@
 import { Dispatch, SetStateAction } from 'react';
-import type { FilterOptions, Filters } from '@/types/dashboard/dashboard.types';
+import type {
+  GameFilterOptions,
+  GameFilters,
+} from '@/types/dashboard/dashboard.types';
 import { Button } from '@/components/ui/button';
 
 interface FiltersProps {
-  filter: FilterOptions;
-  setFilter: Dispatch<SetStateAction<FilterOptions>>;
+  filter: GameFilterOptions;
+  setFilter: Dispatch<SetStateAction<GameFilterOptions>>;
 }
 
-const filters: Filters[] = [
+const filters: GameFilters[] = [
   { value: 'all', label: 'All', className: 'min-w-16' },
   { value: 'playing', label: 'Playing', className: 'min-w-20' },
   { value: 'completed', label: 'Completed', className: 'min-w-24' },

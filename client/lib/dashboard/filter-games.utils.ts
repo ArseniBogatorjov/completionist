@@ -1,7 +1,7 @@
-import { FilterOptions } from '@/types/dashboard/dashboard.types';
+import { GameFilterOptions } from '@/types/dashboard/dashboard.types';
 import { LibraryGame } from '@/types/dashboard/game.types';
 
-function filterGames(filter: FilterOptions, games: LibraryGame[]) {
+function filterGames(filter: GameFilterOptions, games: LibraryGame[]) {
   switch (filter) {
     case 'all':
       return games;
@@ -18,7 +18,7 @@ function filterGames(filter: FilterOptions, games: LibraryGame[]) {
 
 export function getDisplayedGames(
   games: LibraryGame[],
-  filter: FilterOptions,
+  filter: GameFilterOptions,
   search: string,
 ) {
   const filteredGames = filterGames(filter, games);

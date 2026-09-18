@@ -11,3 +11,11 @@ export interface Achievement {
 export interface UserAchievement {
   unlockedAt: string;
 }
+
+export type AchievementFilterOptions = 'all' | 'unlocked' | 'locked';
+
+export interface AchievementFilters {
+  value: AchievementFilterOptions;
+  label: string;
+  className: string;
+}

@@ -4,15 +4,20 @@ import { Dispatch, SetStateAction } from 'react';
 interface SearchbarProps {
   search: string;
   setSearch: Dispatch<SetStateAction<string>>;
+  placeholder: string;
 }
 
-export default function Searchbar({ search, setSearch }: SearchbarProps) {
+export default function Searchbar({
+  search,
+  setSearch,
+  placeholder,
+}: SearchbarProps) {
   return (
     <Input
       value={search}
       onChange={(e) => setSearch(e.target.value)}
       type="search"
-      placeholder="Search for game..."
+      placeholder={placeholder}
       className="bg-black/20 text-zinc-100 transition-all duration-300 hover:border-teal-400/50"
     />
   );

@@ -4,10 +4,10 @@ export interface DashboardStats {
   averageCompletionPercent: number;
 }
 
-export type FilterOptions = 'all' | 'playing' | 'completed' | 'backlog';
+export type GameFilterOptions = 'all' | 'playing' | 'completed' | 'backlog';
 
-export interface Filters {
-  value: FilterOptions;
+export interface GameFilters {
+  value: GameFilterOptions;
   label: string;
   className: string;
 }

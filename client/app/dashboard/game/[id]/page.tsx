@@ -7,8 +7,16 @@ import type { GameDetails } from '@/types/dashboard/game.types';
 import GameOverall from '@/components/game/GameOverall';
 import DataErrorPage from '@/components/error/DataErrorPage';
 import AchievementList from '@/components/game/AchievementList';
+import AchievementFilter from '@/components/game/AchievementFilter';
+import { useState } from 'react';
+import type { AchievementFilterOptions } from '@/types/dashboard/achievement.types';
+import Searchbar from '@/components/shared/Searchbar';
+import { getDisplayedAchievements } from '@/lib/game/filter-achievements.utils';
 
 export default function GamePage() {
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<AchievementFilterOptions>('all');
+
   const params = useParams();
   const gameId = params.id as string;
 
@@ -22,6 +30,12 @@ export default function GamePage() {
       (achievement) =>
         achievement.userAchievements && achievement.userAchievements.length > 0,
     ).length ?? 0;
+
+  const filteredAchievements = getDisplayedAchievements(
+    data?.game.achievements ?? [],
+    filter,
+    search,
+  );
 
   if (isError) {
     return <DataErrorPage />;
@@ -43,7 +57,15 @@ export default function GamePage() {
           totalAchievements={data?.game.achievements?.length ?? 0}
           unlockedAchievements={unlockedAchievements}
         />
-        <AchievementList achievements={data?.game.achievements ?? []} />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <AchievementFilter filter={filter} setFilter={setFilter} />
+          <Searchbar
+            search={search}
+            setSearch={setSearch}
+            placeholder="Search for achievement..."
+          />
+        </div>
+        <AchievementList achievements={filteredAchievements} />
       </div>
     </main>
   );
