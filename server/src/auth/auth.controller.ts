@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, Res, UnauthorizedException, UseGuards, } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -49,11 +58,10 @@ export class AuthController {
     return user;
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    res.clearCookie('accessToken', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/' });
     return { status: 'Success' };
   }
 

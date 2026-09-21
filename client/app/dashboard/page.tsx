@@ -6,11 +6,15 @@ import StatisticsSection from '@/components/dashboard/StatisticsSection';
 import GamesList from '@/components/dashboard/GamesList';
 import { useState } from 'react';
 import DashboardFilter from '@/components/shared/DashboardFilter';
-import { DashboardStats, GameFilterOptions, } from '@/types/dashboard/dashboard.types';
+import {
+  DashboardStats,
+  GameFilterOptions,
+} from '@/types/dashboard/dashboard.types';
 import type { LibraryGame } from '@/types/dashboard/game.types';
 import DataErrorPage from '@/components/error/DataErrorPage';
 import { getDisplayedGames } from '@/lib/dashboard/filter-games.utils';
 import Searchbar from '@/components/shared/Searchbar';
+import SteamSyncSection from '@/components/dashboard/SteamSyncSection';
 
 export default function Dashboard() {
   const {
@@ -52,6 +56,7 @@ export default function Dashboard() {
           completedGames={stats?.completedGames ?? 0}
           averageCompletionPercent={stats?.averageCompletionPercent ?? 0}
         />
+        <SteamSyncSection />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <DashboardFilter filter={filter} setFilter={setFilter} />
           <Searchbar

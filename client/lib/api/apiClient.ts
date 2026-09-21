@@ -14,6 +14,21 @@ export async function apiClient<T>(
     },
   };
 
+  const handleUnauthorized = async () => {
+    if (typeof window !== 'undefined') {
+      try {
+        await fetch(`${baseUrl}/auth/logout`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch {}
+
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+  };
+
   let response = await fetch(`${baseUrl}${endpoint}`, config);
 
   if (response.status === 401 && endpoint !== '/auth/refresh') {
@@ -23,6 +38,7 @@ export async function apiClient<T>(
     });
 
     if (!refreshResponse.ok) {
+      await handleUnauthorized();
       throw new Error('Session expired');
     }
 
@@ -30,6 +46,10 @@ export async function apiClient<T>(
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      await handleUnauthorized();
+    }
+
     let errorMessage = 'An unexpected error occurred';
 
     try {
