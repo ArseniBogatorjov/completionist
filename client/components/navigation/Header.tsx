@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Gamepad2, LayoutDashboard, LogIn, UserPlus } from 'lucide-react';
+import { Gamepad2, LayoutDashboard } from 'lucide-react';
 import { MobileNav } from '@/components/navigation/MobileNav';
+import { UserNav } from '@/components/navigation/UserNav';
 import { useAuth } from '@/providers/AuthProvider';
 
 export default function Header() {
@@ -45,36 +45,9 @@ export default function Header() {
             </Link>
           )}
 
-          {!isLoading && (
-            <div className="ml-2 flex items-center gap-3 border-l border-white/10 pl-6">
-              {!isAuthenticated ? (
-                <>
-                  <Link href="/login">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-zinc-300 hover:text-teal-400"
-                    >
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Login
-                    </Button>
-                  </Link>
-
-                  <Link href="/register">
-                    <Button
-                      size="sm"
-                      className="border border-teal-400/50 bg-teal-400/10 text-teal-400 transition-all duration-300 hover:bg-teal-400 hover:text-black hover:shadow-[0_0_15px_rgba(102,252,241,0.4)]"
-                    >
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Register
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <span className="text-sm text-zinc-400">{user.username}</span>
-              )}
-            </div>
-          )}
+          <div className="ml-2 border-l border-white/10 pl-6">
+            <UserNav />
+          </div>
         </nav>
 
         <MobileNav />

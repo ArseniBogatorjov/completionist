@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api/apiClient';
 import { loginSchema } from '@/lib/validations/auth.schema';
+import { useAuth } from '@/providers/AuthProvider';
 
 export function LoginForm() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export function LoginForm() {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+
+  const { refetchUser } = useAuth();
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
@@ -39,7 +42,7 @@ export function LoginForm() {
           password: result.data.password,
         }),
       });
-
+      await refetchUser();
       router.push('/dashboard');
     } catch (error) {
       if (error instanceof Error) {
