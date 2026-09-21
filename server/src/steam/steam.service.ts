@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SyncSteamDto } from './dto/sync-steam.dto';
 import { ProgressCalculationObject } from './types/steam.types';
 import type {
+  SteamAchievement,
   SteamGame,
   SteamGameSchemaResponse,
   SteamGetOwnedGamesResponse,
@@ -11,6 +12,7 @@ import type {
   SteamPlayerAchievementsResponse,
 } from './types/steam-api.responses';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { ScavengerService } from '../scavenger/scavenger.service';
 
 @Injectable()
 export class SteamService {
@@ -20,6 +22,7 @@ export class SteamService {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly scavengerService: ScavengerService,
   ) {
     this.STEAM_API_KEY = configService.getOrThrow('STEAM_API_KEY');
   }
@@ -128,7 +131,7 @@ export class SteamService {
   private async saveGameAchievements(
     gameId: string,
     appId: number,
-    achievements: any[],
+    achievements: SteamAchievement[],
   ): Promise<number> {
     try {
       const globalPercentagesData =
@@ -270,6 +273,11 @@ export class SteamService {
         gameId,
         game.appid,
         achievements,
+      );
+
+      await this.scavengerService.updateMissableAchievements(
+        gameId,
+        game.appid,
       );
 
       const unlockedAchievements = await this.saveUserAchievements(

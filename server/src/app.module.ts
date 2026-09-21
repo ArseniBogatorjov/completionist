@@ -6,19 +6,17 @@ import { PrismaService } from './prisma/prisma.service';
 import { ConfigModule } from '@nestjs/config';
 import { SteamModule } from './steam/steam.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { AiModule } from './ai/ai.module';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScavengerModule } from './scavenger/scavenger.module';
 
 @Module({
   imports: [
-    EventEmitterModule.forRoot(),
     AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     SteamModule,
     DashboardModule,
-    AiModule,
+    ScavengerModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

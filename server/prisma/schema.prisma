@@ -40,15 +40,15 @@ model Game {
 }
 
 model Achievement {
-  id           String  @id @default(uuid())
+  id           String   @id @default(uuid())
   gameId       String
-  game         Game    @relation(fields: [gameId], references: [id])
+  game         Game     @relation(fields: [gameId], references: [id])
   apiname      String
   name         String
   description  String?
   iconUrl      String
   globalRarity Float?
-  isMissable   Boolean @default(false)
+  isMissable   Boolean?
   dlcName      String?
 
   userAchievements UserAchievement[]
