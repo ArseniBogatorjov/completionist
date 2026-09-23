@@ -23,7 +23,7 @@ export default function Header() {
           </div>
 
           <span className="text-lg font-bold tracking-wider text-zinc-100 transition-colors group-hover:text-teal-400">
-            Completionist
+            Completionist Hub
           </span>
         </Link>
 

@@ -37,7 +37,7 @@ export function MobileNav() {
         <SheetHeader className="text-left pb-4 border-b border-white/10">
           <SheetTitle className="flex items-center gap-2 text-zinc-100">
             <Gamepad2 className="h-5 w-5 text-teal-400" />
-            <span>Completionist</span>
+            <span>Completionist Hub</span>
           </SheetTitle>
         </SheetHeader>
 

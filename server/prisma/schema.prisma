@@ -27,11 +27,10 @@ model User {
 }
 
 model Game {
-  id                String  @id @default(uuid())
-  steamAppId        Int     @unique
-  name              String
-  coverUrl          String?
-  isMultiplayerDead Boolean @default(false)
+  id         String  @id @default(uuid())
+  steamAppId Int     @unique
+  name       String
+  coverUrl   String?
 
   achievements Achievement[]
   users        UserGame[]
@@ -49,7 +48,6 @@ model Achievement {
   iconUrl      String
   globalRarity Float?
   isMissable   Boolean?
-  dlcName      String?
 
   userAchievements UserAchievement[]
 

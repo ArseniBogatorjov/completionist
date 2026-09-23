@@ -18,6 +18,8 @@ function filterAchievements(
       return achievements.filter(
         (achievement) => achievement.userAchievements.length === 0,
       );
+    case 'missable':
+      return achievements.filter((achievement) => achievement.isMissable);
     default:
       return achievements;
   }

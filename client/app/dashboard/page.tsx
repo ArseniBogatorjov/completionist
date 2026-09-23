@@ -5,16 +5,24 @@ import { apiClient } from '@/lib/api/apiClient';
 import StatisticsSection from '@/components/dashboard/StatisticsSection';
 import GamesList from '@/components/dashboard/GamesList';
 import { useState } from 'react';
-import DashboardFilter from '@/components/shared/DashboardFilter';
-import {
-  DashboardStats,
+import type { DashboardStats } from '@/types/dashboard/dashboard.types';
+import type {
+  FilterButton,
   GameFilterOptions,
-} from '@/types/dashboard/dashboard.types';
+} from '@/types/filters/filters.types';
 import type { LibraryGame } from '@/types/dashboard/game.types';
 import DataErrorPage from '@/components/error/DataErrorPage';
 import { getDisplayedGames } from '@/lib/dashboard/filter-games.utils';
 import Searchbar from '@/components/shared/Searchbar';
 import SteamSyncSection from '@/components/dashboard/SteamSyncSection';
+import FilterButtons from '@/components/shared/FilterButtons';
+
+const filters: FilterButton<GameFilterOptions>[] = [
+  { value: 'all', label: 'All', className: 'min-w-16' },
+  { value: 'playing', label: 'Playing', className: 'min-w-20' },
+  { value: 'completed', label: 'Completed', className: 'min-w-24' },
+  { value: 'backlog', label: 'Backlog', className: 'min-w-24' },
+];
 
 export default function Dashboard() {
   const {
@@ -58,7 +66,11 @@ export default function Dashboard() {
         />
         <SteamSyncSection />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <DashboardFilter filter={filter} setFilter={setFilter} />
+          <FilterButtons
+            filter={filter}
+            setFilter={setFilter}
+            filters={filters}
+          />
           <Searchbar
             search={search}
             setSearch={setSearch}
