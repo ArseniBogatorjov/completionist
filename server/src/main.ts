@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { SwaggerModule } from '@nestjs/swagger';
+import { getSwaggerConfig } from './config/swagger.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +24,12 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  const config = getSwaggerConfig();
+
+  const document = SwaggerModule.createDocument(app, config);
+
+  SwaggerModule.setup('/docs', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
 }

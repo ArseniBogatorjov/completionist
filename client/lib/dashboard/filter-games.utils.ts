@@ -1,5 +1,5 @@
-import { GameFilterOptions } from '@/types/dashboard/dashboard.types';
-import { LibraryGame } from '@/types/dashboard/game.types';
+import type { LibraryGame } from '@/types/dashboard/game.types';
+import type { GameFilterOptions } from '@/types/filters/filters.types';
 
 function filterGames(filter: GameFilterOptions, games: LibraryGame[]) {
   switch (filter) {

@@ -13,7 +13,6 @@ import type {
   JwtPayload,
   LoginResponse,
   RefreshTokenResponse,
-  RegisterResponse,
 } from './types/auth.types';
 
 @Injectable()
@@ -33,7 +32,7 @@ export class AuthService {
       configService.getOrThrow<string>('JWT_REFRESH_SECRET');
   }
 
-  public async register(dto: RegisterDto): Promise<RegisterResponse> {
+  public async register(dto: RegisterDto): Promise<{ status: string }> {
     const { username, email, password, avatarUrl } = dto;
 
     const existingUser = await this.prisma.user.findUnique({
@@ -46,21 +45,16 @@ export class AuthService {
 
     const hashedPassword = (await argon2.hash(password)) as string;
 
-    return this.prisma.user.create({
+    await this.prisma.user.create({
       data: {
         username,
         email,
         passwordHash: hashedPassword,
         avatarUrl,
       },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        avatarUrl: true,
-        createdAt: true,
-      },
     });
+
+    return { status: 'success' };
   }
 
   public async login(dto: LoginDto): Promise<LoginResponse> {
@@ -107,6 +101,14 @@ export class AuthService {
           secret: this.JWT_REFRESH_SECRET,
         },
       );
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User no longer exists');
+      }
 
       return {
         accessToken: await this.jwtService.signAsync({ sub, email }),

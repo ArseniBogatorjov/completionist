@@ -9,14 +9,6 @@ export interface LoginResponse {
   };
 }
 
-export interface RegisterResponse {
-  id: string;
-  username: string;
-  email: string | null;
-  avatarUrl: string | null;
-  createdAt: Date;
-}
-
 export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;

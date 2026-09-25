@@ -1,7 +1,5 @@
-import type {
-  Achievement,
-  AchievementFilterOptions,
-} from '@/types/dashboard/achievement.types';
+import type { Achievement } from '@/types/dashboard/achievement.types';
+import type { AchievementFilterOptions } from '@/types/filters/filters.types';
 
 function filterAchievements(
   filter: AchievementFilterOptions,
@@ -36,7 +34,9 @@ export function getDisplayedAchievements(
 
   if (!query) return filteredAchievements;
 
-  return filteredAchievements.filter((achievement) =>
-    achievement.name.toLowerCase().includes(query),
+  return filteredAchievements.filter(
+    (achievement) =>
+      achievement.name.toLowerCase().includes(query) ||
+      achievement.description?.toLowerCase().includes(query),
   );
 }

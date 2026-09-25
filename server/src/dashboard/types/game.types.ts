@@ -12,13 +12,13 @@ export interface Game {
 }
 
 export interface NearCompletionGame {
-  gameId: string;
-  completionPercent: number;
   game: {
+    id: string;
     name: string;
     coverUrl: string | null;
   };
   remainingAchievements: number;
+  completionPercent: number;
 }
 
 export interface GameDetails {

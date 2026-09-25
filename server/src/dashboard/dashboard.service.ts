@@ -114,13 +114,13 @@ export class DashboardService {
 
       if (remainingAchievements >= 1 && remainingAchievements <= 3) {
         nearCompletionGames.push({
-          gameId: candidate.gameId,
-          completionPercent: candidate.completionPercent,
           game: {
+            id: candidate.gameId,
             name: candidate.game.name,
             coverUrl: candidate.game.coverUrl,
           },
           remainingAchievements,
+          completionPercent: candidate.completionPercent,
         });
       }
 
