@@ -13,6 +13,7 @@ import { FilterButton } from '@/types/filters/filters.types';
 import Searchbar from '@/components/shared/Searchbar';
 import { getDisplayedAchievements } from '@/lib/game/filter-achievements.utils';
 import FilterButtons from '@/components/shared/FilterButtons';
+import GameSkeleton from '@/components/game/GameSkeleton';
 
 const filters: FilterButton<AchievementFilterOptions>[] = [
   { value: 'all', label: 'All', className: 'min-w-16' },
@@ -50,7 +51,7 @@ export default function GamePage() {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <GameSkeleton />;
   }
 
   return (

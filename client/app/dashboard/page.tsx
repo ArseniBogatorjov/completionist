@@ -16,6 +16,7 @@ import { getDisplayedGames } from '@/lib/dashboard/filter-games.utils';
 import Searchbar from '@/components/shared/Searchbar';
 import SteamSyncSection from '@/components/dashboard/SteamSyncSection';
 import FilterButtons from '@/components/shared/FilterButtons';
+import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
 
 const filters: FilterButton<GameFilterOptions>[] = [
   { value: 'all', label: 'All', className: 'min-w-16' },
@@ -49,7 +50,7 @@ export default function Dashboard() {
   const filteredGames = getDisplayedGames(games ?? [], filter, search);
 
   if (isStatsLoading || isPlayingLoading) {
-    return <DataErrorPage />;
+    return <DashboardSkeleton />;
   }
 
   if (isStatsError || isPlayingError) {
