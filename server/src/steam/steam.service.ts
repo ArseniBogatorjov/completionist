@@ -10,6 +10,7 @@ import type {
   SteamGetOwnedGamesResponse,
   SteamGlobalAchievementsResponse,
   SteamPlayerAchievementsResponse,
+  SteamPlayerSummariesResponse,
 } from './types/steam-api.responses';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { ScavengerService } from '../scavenger/scavenger.service';
@@ -347,6 +348,8 @@ export class SteamService {
     const { steamId } = dto;
 
     try {
+      await this.validateSteamId(steamId);
+
       const steamResponse = await this.fetchUserGames(steamId);
 
       const games = steamResponse?.response?.games;
@@ -384,7 +387,37 @@ export class SteamService {
       }
     } catch (error) {
       this.logger.error(`User sync failed for userId ${userId}:`, error);
+
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
       throw new BadRequestException('Steam synchronization failed');
+    }
+  }
+
+  private async validateSteamId(steamId: string): Promise<void> {
+    const url = new URL(
+      'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/',
+    );
+
+    url.searchParams.append('key', this.STEAM_API_KEY);
+    url.searchParams.append('steamids', steamId);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new BadRequestException('Failed to validate Steam account');
+    }
+
+    const data = (await response.json()) as SteamPlayerSummariesResponse;
+
+    const player = data.response?.players?.find(
+      (player) => player.steamid === steamId,
+    );
+
+    if (!player) {
+      throw new BadRequestException('Steam account not found');
     }
   }
 }

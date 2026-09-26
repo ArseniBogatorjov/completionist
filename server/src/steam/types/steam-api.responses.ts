@@ -59,3 +59,13 @@ export interface SteamGlobalAchievementsResponse {
     achievements?: SteamGlobalAchievementItem[];
   };
 }
+
+export interface SteamPlayerSummary {
+  steamid: string;
+}
+
+export interface SteamPlayerSummariesResponse {
+  response?: {
+    players?: SteamPlayerSummary[];
+  };
+}
